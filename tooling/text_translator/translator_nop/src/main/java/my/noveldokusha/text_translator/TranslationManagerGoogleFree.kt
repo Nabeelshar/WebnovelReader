@@ -11,9 +11,12 @@ import my.noveldokusha.core.AppCoroutineScope
 import my.noveldokusha.text_translator.domain.TranslationManager
 import my.noveldokusha.text_translator.domain.TranslationModelState
 import my.noveldokusha.text_translator.domain.TranslatorState
-import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
@@ -21,17 +24,16 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 /**
- * Translation manager using free Google Translate API
- * No API key required - uses unofficial endpoint
- * Limit: ~13-14k characters per request
+ * Translation manager using Google Translate widget translateHtml API (no user API key).
+ * Matches browser requests from translate-pa.googleapis.com (twkan.com HAR).
  */
 class TranslationManagerGoogleFree(
     private val coroutineScope: AppCoroutineScope
 ) : TranslationManager {
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(90, TimeUnit.SECONDS)
         .build()
 
     override val available = true
@@ -43,6 +45,7 @@ class TranslationManagerGoogleFree(
     // Google Translate supports many languages
     override val models = mutableStateListOf<TranslationModelState>().apply {
         val supportedLanguages = listOf(
+            "auto", // API detect-language (translateHtml); pass-through in normalizeLanguageCode
             "en", "zh", "ja", "ko", "es", "fr", "de", "it", "pt", "ru",
             "ar", "hi", "th", "vi", "id", "tr", "pl", "nl", "sv", "da",
             "fi", "no", "cs", "el", "he", "ro", "hu", "uk", "bg", "hr"
@@ -72,6 +75,11 @@ class TranslationManagerGoogleFree(
     }
 
     private val json = Json { ignoreUnknownKeys = true }
+
+    /**
+     * translateHtml as used by the Google Translate widget (captured from twkan.com HAR).
+     * Payload: [[[content, ...], source_lang, target_lang], "te_lib"]
+     */
     private suspend fun translateWithGoogleFree(
         text: String,
         sourceLanguage: String,
@@ -86,9 +94,9 @@ class TranslationManagerGoogleFree(
 
         Log.d(TAG, "translateWithGoogleFree: starting translation (length=${text.length})")
 
-        val maxChars = 13000
-        if (text.length > maxChars) {
-            Log.d(TAG, "translateWithGoogleFree: text too long, splitting...")
+        val html = buildTaggedHtml(listOf(text))
+        if (html.length > MAX_TAGGED_HTML_CHARS) {
+            Log.d(TAG, "translateWithGoogleFree: payload too long (${html.length} > $MAX_TAGGED_HTML_CHARS), splitting...")
             return@withContext translateLongText(text, sourceLanguage, targetLanguage)
         }
 
@@ -97,73 +105,18 @@ class TranslationManagerGoogleFree(
             try {
                 Log.d(TAG, "translateWithGoogleFree: attempt ${attempt + 1}/$retryCount")
 
-                val request = if (text.length > 500) {
-                    // Use POST for large texts
-                    val formBody = okhttp3.FormBody.Builder()
-                        .add("client", "gtx")
-                        .add("sl", sourceLanguage)
-                        .add("tl", targetLanguage)
-                        .add("dt", "t")
-                        .add("q", text)
-                        .build()
+                val responseBody = postTranslateHtml(listOf(html), sourceLanguage, targetLanguage)
+                val translatedHtml = parseFirstTranslatedString(responseBody)
 
-                    okhttp3.Request.Builder()
-                        .url("https://translate.googleapis.com/translate_a/single")
-                        .post(formBody)
-                        .addHeader("User-Agent", "Mozilla/5.0")
-                        .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                        .build()
-                } else {
-                    // Use GET with safe HttpUrl builder
-                    val url = "https://translate.googleapis.com/translate_a/single".toHttpUrl().newBuilder()
-                        .addQueryParameter("client", "gtx")
-                        .addQueryParameter("sl", sourceLanguage)
-                        .addQueryParameter("tl", targetLanguage)
-                        .addQueryParameter("dt", "t")
-                        .addQueryParameter("q", text)
-                        .build()
+                val result = extractTextFromTaggedHtml(translatedHtml, 0) ?: translatedHtml.trim()
 
-                    okhttp3.Request.Builder()
-                        .url(url)
-                        .addHeader("User-Agent", "Mozilla/5.0")
-                        .build()
-                }
-                val startTime = System.currentTimeMillis()
-                val response = client.newCall(request).execute()
-                val endTime = System.currentTimeMillis() // <-- Замер времени после запроса
-
-                Log.d(TAG, "Network request took ${endTime - startTime} ms on Android ${android.os.Build.VERSION.SDK_INT}")
-
-                val responseBody = response.body?.string() ?: ""
-
-                Log.d(TAG, "translateWithGoogleFree: response code=${response.code}, bodyLength=${responseBody.length}")
-
-                if (response.isSuccessful && responseBody.isNotEmpty()) {
-
-                    try {
-                        val jsonElement = json.parseToJsonElement(responseBody)
-
-                        val result = buildString {
-                            val mainArray = jsonElement.jsonArray.getOrNull(0)?.jsonArray
-                            if (mainArray != null) {
-                                for (item in mainArray) {
-                                    val part = item.jsonArray.getOrNull(0)?.jsonPrimitive?.contentOrNull ?: ""
-                                    append(part)
-                                }
-                            }
-                        }.trim()
-
-                        if (result.isNotEmpty()) {
-                            Log.d(TAG, "translateWithGoogleFree: success, result length=${result.length}")
-                            translationCache[cacheKey] = result
-                            return@withContext result
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "translateWithGoogleFree: JSON parsing error with Kotlinx Serialization", e)
-                    }
+                if (result.isNotEmpty() && !result.startsWith("[Translation")) {
+                    Log.d(TAG, "translateWithGoogleFree: success, result length=${result.length}")
+                    translationCache[cacheKey] = result
+                    return@withContext result
                 }
 
-                Log.w(TAG, "translateWithGoogleFree: empty or failed response (code=${response.code})")
+                Log.w(TAG, "translateWithGoogleFree: empty or failed response")
 
             } catch (e: Exception) {
                 Log.e(TAG, "translateWithGoogleFree: error on attempt ${attempt + 1} - ${e.message}", e)
@@ -175,8 +128,17 @@ class TranslationManagerGoogleFree(
             }
         }
 
-        // If all retries fail
         return@withContext "[Translation error: ${lastException?.message?.take(50) ?: "unknown"}]"
+    }
+
+    /** Unescape common HTML entities returned by translateHtml */
+    private fun unescapeHtml(text: String): String {
+        return text
+            .replace("&#39;", "'")
+            .replace("&quot;", "\"")
+            .replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
     }
 
     private suspend fun translateLongText(
@@ -184,9 +146,9 @@ class TranslationManagerGoogleFree(
         sourceLanguage: String,
         targetLanguage: String
     ): String = withContext(Dispatchers.IO) {
-        Log.d(TAG, "translateLongText: splitting text (${text.length} chars)")
+        Log.d(TAG, "translateLongText: splitting text (${text.length} chars) into ~$MAX_RAW_TEXT_CHARS-char batches")
 
-        val (firstPart, secondPart) = splitTextIntoTwoParts(text)
+        val (firstPart, secondPart) = splitAtLimit(text, MAX_RAW_TEXT_CHARS)
         Log.d(TAG, "translateLongText: part1=${firstPart.length} chars, part2=${secondPart.length} chars")
 
         if (firstPart.isEmpty() && secondPart.isEmpty()) {
@@ -217,34 +179,32 @@ class TranslationManagerGoogleFree(
 
 
     /**
-     * Split text into two parts at sentence boundaries
-     * Tries to split evenly while respecting sentence structure
+     * Split text into (first ~limit chars, remaining).
+     * Tries to break on sentence boundary or whitespace near the limit to preserve context.
      */
-    private fun splitTextIntoTwoParts(text: String): Pair<String, String> {
-        // Split text into sentences using basic regex
-        val sentences = text.split(Regex("(?<=[.!?])\\s+"))
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
+    private fun splitAtLimit(text: String, limit: Int): Pair<String, String> {
+        if (text.length <= limit) return Pair(text, "")
 
-        if (sentences.isEmpty()) {
-            return Pair("", "")
+        // Try to find a sentence-ending punctuation at or before limit
+        val sentenceEnd = text.substring(0, limit).lastIndexOfAny(charArrayOf('.', '!', '?', '。', '！', '？', '\n'))
+        val splitIndex = when {
+            sentenceEnd > limit / 2 -> sentenceEnd + 1
+            else -> {
+                // Fall back to a whitespace near the limit
+                val ws = text.substring(0, limit).lastIndexOf(' ')
+                if (ws > limit / 2) ws else limit
+            }
         }
 
-        // Split point: first half gets slightly more if odd number
-        val midIndex = (sentences.size + 1) / 2
-
-        val firstPartSentences = sentences.take(midIndex)
-        val secondPartSentences = sentences.drop(midIndex)
-
-        val firstPartText = firstPartSentences.joinToString(" ")
-        val secondPartText = secondPartSentences.joinToString(" ")
-
-        return Pair(firstPartText, secondPartText)
+        val first = text.substring(0, splitIndex).trim()
+        val second = text.substring(splitIndex).trim()
+        return Pair(first, second)
     }
 
     /**
-     * Translate all paragraphs as one large chunk for maximum context
-     * Combines all text up to 12k characters in single request
+     * Translate all paragraphs using <a i=N> tags for paragraph-level mapping.
+     * This mirrors the Google Translate website widget's approach from the HAR capture,
+     * ensuring each paragraph maps correctly in the response.
      */
     override suspend fun translateBatch(
         texts: List<String>,
@@ -253,33 +213,26 @@ class TranslationManagerGoogleFree(
     ): Map<String, String> = withContext(Dispatchers.IO) {
         if (texts.isEmpty()) return@withContext emptyMap()
 
-        Log.d(TAG, "translateBatch: translating ${texts.size} texts as large chunk")
+        Log.d(TAG, "translateBatch: translating ${texts.size} texts with <a i=N> tags")
 
         val translations = mutableMapOf<String, String>()
 
-        // Combine ALL texts into one large string with newline separators
-        // Using double newline to preserve paragraph boundaries
-        val combinedText = texts.joinToString("\n\n")
-        val totalChars = combinedText.length
+        val taggedHtml = buildTaggedHtml(texts)
+        val taggedLength = taggedHtml.length
 
-        Log.d(TAG, "translateBatch: combined ${texts.size} paragraphs into $totalChars characters")
-
-        if (totalChars > 12000) {
-            Log.w(TAG, "translateBatch: text too long ($totalChars chars), splitting into chunks")
-            // Split into reasonable chunks
-            val maxCharsPerChunk = 10000
+        if (taggedLength > MAX_TAGGED_HTML_CHARS) {
+            Log.w(TAG, "translateBatch: tagged HTML too long ($taggedLength chars), splitting chunks")
             val chunks = mutableListOf<List<String>>()
             var currentChunk = mutableListOf<String>()
-            var currentLength = 0
 
             texts.forEach { text ->
-                if (currentLength + text.length + 1 > maxCharsPerChunk && currentChunk.isNotEmpty()) {
+                val candidate = currentChunk + text
+                if (currentChunk.isNotEmpty() && buildTaggedHtml(candidate).length > MAX_TAGGED_HTML_CHARS) {
                     chunks.add(currentChunk.toList())
-                    currentChunk = mutableListOf()
-                    currentLength = 0
+                    currentChunk = mutableListOf(text)
+                } else {
+                    currentChunk.add(text)
                 }
-                currentChunk.add(text)
-                currentLength += text.length + 1
             }
             if (currentChunk.isNotEmpty()) {
                 chunks.add(currentChunk)
@@ -289,10 +242,8 @@ class TranslationManagerGoogleFree(
             val results = coroutineScope {
                 chunks.map { chunk ->
                     async(Dispatchers.IO) {
-                        val chunkText = chunk.joinToString("\n\n")
                         try {
-                            val translatedChunk = translateWithGoogleFree(chunkText, sourceLanguage, targetLanguage)
-                            Pair(chunk, translatedChunk)
+                            Pair(chunk, translateBatchWithTags(chunk, sourceLanguage, targetLanguage))
                         } catch (e: Exception) {
                             Log.e(TAG, "translateBatch: chunk failed - ${e.message}")
                             Pair(chunk, null)
@@ -301,52 +252,161 @@ class TranslationManagerGoogleFree(
                 }.awaitAll()
             }
 
-            results.forEach { (originalChunkTexts, translatedText) ->
-                if (translatedText != null) {
-                    val translatedParagraphs = translatedText.split("\n\n")
-                        .map { it.trim() }
-                        .filter { it.isNotEmpty() }
-
-                    originalChunkTexts.forEachIndexed { index, originalText ->
-                        translations[originalText] = translatedParagraphs.getOrNull(index) ?: translatedText
-                    }
+            results.forEach { (originalChunkTexts, translatedMap) ->
+                if (translatedMap != null) {
+                    translations.putAll(translatedMap)
                 } else {
-                    originalChunkTexts.forEach { originalText ->
-                        translations[originalText] = originalText
-                    }
+                    originalChunkTexts.forEach { translations[it] = it }
                 }
             }
         } else {
             try {
-                val translated = translateWithGoogleFree(combinedText, sourceLanguage, targetLanguage)
-                Log.d(TAG, "translateBatch: translation successful, result length=${translated.length}")
-
-                val translatedParagraphs = translated.split("\n\n")
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
-
-                Log.d(TAG, "translateBatch: split result into ${translatedParagraphs.size} paragraphs (expected ${texts.size})")
-
-                if (translatedParagraphs.size == texts.size) {
-                    texts.forEachIndexed { index, originalText ->
-                        translations[originalText] = translatedParagraphs[index]
-                    }
-                } else {
-                    Log.w(TAG, "translateBatch: paragraph count mismatch, using fallback mapping")
-                    texts.forEachIndexed { index, originalText ->
-                        translations[originalText] = translatedParagraphs.getOrNull(index) ?: translated
-                    }
-                }
+                translations.putAll(translateBatchWithTags(texts, sourceLanguage, targetLanguage))
             } catch (e: Exception) {
                 Log.e(TAG, "translateBatch: failed - ${e.message}", e)
-                texts.forEach { text ->
-                    translations[text] = text
-                }
+                texts.forEach { translations[it] = it }
             }
         }
 
         Log.d(TAG, "translateBatch: completed, ${translations.size}/${texts.size} entries")
         return@withContext translations
+    }
+
+    /**
+     * Translate a list of texts using <a i=N> tag wrapping for precise paragraph mapping.
+     */
+    private suspend fun translateBatchWithTags(
+        texts: List<String>,
+        sourceLanguage: String,
+        targetLanguage: String
+    ): Map<String, String> = withContext(Dispatchers.IO) {
+        val htmlContent = buildTaggedHtml(texts)
+        val responseBody = postTranslateHtml(listOf(htmlContent), sourceLanguage, targetLanguage)
+        val translatedHtml = parseFirstTranslatedString(responseBody)
+
+        val translations = mutableMapOf<String, String>()
+
+        if (translatedHtml.isNotEmpty()) {
+            val tagRegex = Regex("""<a\s+i=(\d+)>(.*?)</a>""", RegexOption.DOT_MATCHES_ALL)
+            val matches = tagRegex.findAll(unescapeHtml(translatedHtml))
+
+            for (match in matches) {
+                val index = match.groupValues[1].toIntOrNull() ?: continue
+                val translatedText = match.groupValues[2].trim()
+                if (index < texts.size) {
+                    translations[texts[index]] = translatedText
+                }
+            }
+        }
+
+        texts.forEach { text ->
+            if (text !in translations) {
+                translations[text] = text
+            }
+        }
+
+        return@withContext translations
+    }
+
+    /** Widget-style paragraph tags (twkan.com HAR). */
+    private fun buildTaggedHtml(texts: List<String>): String {
+        return texts.mapIndexed { index, text ->
+            "<a i=$index>\n    $text</a>"
+        }.joinToString("")
+    }
+
+    private fun buildTranslateHtmlPayload(
+        contentParts: List<String>,
+        sourceLanguage: String,
+        targetLanguage: String
+    ): String {
+        val source = normalizeLanguageCode(sourceLanguage)
+        val target = normalizeLanguageCode(targetLanguage)
+        return buildJsonArray {
+            add(
+                buildJsonArray {
+                    add(
+                        buildJsonArray {
+                            contentParts.forEach { add(JsonPrimitive(it)) }
+                        }
+                    )
+                    add(JsonPrimitive(source))
+                    add(JsonPrimitive(target))
+                }
+            )
+            add(JsonPrimitive("te_lib"))
+        }.toString()
+    }
+
+    private fun normalizeLanguageCode(language: String): String {
+        return when (language.lowercase()) {
+            "auto" -> "auto"
+            "zh-cn", "zh-hans" -> "zh-CN"
+            "zh-tw", "zh-hant" -> "zh-TW"
+            else -> language
+        }
+    }
+
+    private fun postTranslateHtml(
+        contentParts: List<String>,
+        sourceLanguage: String,
+        targetLanguage: String
+    ): String {
+        val payload = buildTranslateHtmlPayload(contentParts, sourceLanguage, targetLanguage)
+        val requestBody = payload.toRequestBody(CONTENT_TYPE_JSON_PROTOBUF.toMediaType())
+        val request = okhttp3.Request.Builder()
+            .url(TRANSLATE_HTML_URL)
+            .post(requestBody)
+            .header("Accept", "*/*")
+            .header("Accept-Language", "en-US,en;q=0.9")
+            .header("Cache-Control", "no-cache")
+            .header("Content-Type", "application/json+protobuf")
+            .header("Origin", TRANSLATE_ORIGIN)
+            .header("Pragma", "no-cache")
+            .header("Referer", "$TRANSLATE_ORIGIN/")
+            .header("Sec-Fetch-Dest", "empty")
+            .header("Sec-Fetch-Mode", "cors")
+            .header("Sec-Fetch-Site", "cross-site")
+            .header("User-Agent", USER_AGENT)
+            .header("X-Browser-Channel", "stable")
+            .header("X-Browser-Copyright", "Copyright 2026 Google LLC. All Rights Reserved.")
+            .header("X-Browser-Validation", "+f/6R40gd6znZQYfwfSnAdnLwLk=")
+            .header("X-Browser-Year", "2026")
+            .header("X-Client-Data", "CKmdygEIlKHLAQiFoM0BCJHLlDA=")
+            .header("X-Goog-Api-Key", GOOGLE_TRANSLATE_API_KEY)
+            .build()
+
+        val startTime = System.currentTimeMillis()
+        val response = client.newCall(request).execute()
+        val elapsed = System.currentTimeMillis() - startTime
+        val responseBody = response.body?.string() ?: ""
+
+        Log.d(
+            TAG,
+            "postTranslateHtml: code=${response.code}, elapsed=${elapsed}ms, bodyLength=${responseBody.length}"
+        )
+
+        if (!response.isSuccessful) {
+            throw IllegalStateException("translateHtml HTTP ${response.code}")
+        }
+        if (responseBody.isEmpty()) {
+            throw IllegalStateException("translateHtml empty response")
+        }
+        return responseBody
+    }
+
+    private fun parseFirstTranslatedString(responseBody: String): String {
+        val jsonElement = json.parseToJsonElement(responseBody)
+        return jsonElement.jsonArray
+            .getOrNull(0)?.jsonArray
+            ?.getOrNull(0)?.jsonPrimitive?.contentOrNull
+            ?.let { unescapeHtml(it) }
+            ?: ""
+    }
+
+    private fun extractTextFromTaggedHtml(html: String, index: Int): String? {
+        val tagRegex = Regex("""<a\s+i=$index>(.*?)</a>""", RegexOption.DOT_MATCHES_ALL)
+        return tagRegex.find(html)?.groupValues?.getOrNull(1)?.trim()
     }
 
     override fun downloadModel(language: String) {
@@ -376,5 +436,15 @@ class TranslationManagerGoogleFree(
 
     companion object {
         private const val TAG = "TranslationGoogleFree"
+        private const val TRANSLATE_HTML_URL = "https://translate-pa.googleapis.com/v1/translateHtml"
+        private const val TRANSLATE_ORIGIN = "https://twkan.com"
+        private const val GOOGLE_TRANSLATE_API_KEY = "AIzaSyATBXajvzQLTDHEQbcpq0Ihe0vWDHmO520"
+        private const val USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+        private val CONTENT_TYPE_JSON_PROTOBUF = "application/json+protobuf"
+        /** Max tagged HTML per translateHtml request (~35KB payload tested OK for full chapters). */
+        private const val MAX_TAGGED_HTML_CHARS = 16_000
+        /** Raw text split size when a single tagged block would exceed [MAX_TAGGED_HTML_CHARS]. */
+        private const val MAX_RAW_TEXT_CHARS = 12_000
     }
 }

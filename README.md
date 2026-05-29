@@ -1,4 +1,4 @@
-
+ 
 
 # NovelDokusha
 Android web novel reader. Reader focused on simplicity, improving reading immersion.
@@ -10,7 +10,8 @@ Search from a large catalog of content, open your pick and just enjoy.
 Copyright © 2023, [nani](https://github.com/nanihadesuka), Released under [GPL-3](LICENSE) FOSS
 
 ## Features
-  - **Gemini Translation Support** - Live translation powered by Google Gemini AI
+  - **Live translation** - Google Translate (free, no key) with optional Gemini AI
+  - **Auto-detect source language** when translating chapters
   - **Multiple sources** from where to read novels:
     - **Chinese Sources** (with GBK encoding support):
       - 69书吧 (69shuba.com) - With automatic Cloudflare bypass
