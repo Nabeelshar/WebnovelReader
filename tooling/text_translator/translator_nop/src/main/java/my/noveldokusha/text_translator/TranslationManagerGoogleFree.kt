@@ -8,6 +8,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.coroutineScope
 import my.noveldokusha.core.AppCoroutineScope
+import my.noveldokusha.core.appPreferences.AppPreferences
 import my.noveldokusha.text_translator.domain.TranslationManager
 import my.noveldokusha.text_translator.domain.TranslationModelState
 import my.noveldokusha.text_translator.domain.TranslatorState
@@ -28,8 +29,12 @@ import java.util.concurrent.TimeUnit
  * Matches browser requests from translate-pa.googleapis.com (twkan.com HAR).
  */
 class TranslationManagerGoogleFree(
-    private val coroutineScope: AppCoroutineScope
+    private val coroutineScope: AppCoroutineScope,
+    private val appPreferences: AppPreferences,
 ) : TranslationManager {
+
+    private val apiKey: String
+        get() = appPreferences.TRANSLATION_GOOGLE_API_KEY.value.trim()
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -347,6 +352,17 @@ class TranslationManagerGoogleFree(
         }
     }
 
+    private fun requireApiKey(): String {
+        val key = apiKey
+        if (key.isBlank()) {
+            throw IllegalStateException(
+                "Google Translate API key not set. Open Settings → Translation and add your key " +
+                    "(see docs/GOOGLE_TRANSLATE_API_KEY.md)."
+            )
+        }
+        return key
+    }
+
     private fun postTranslateHtml(
         contentParts: List<String>,
         sourceLanguage: String,
@@ -373,7 +389,7 @@ class TranslationManagerGoogleFree(
             .header("X-Browser-Validation", "+f/6R40gd6znZQYfwfSnAdnLwLk=")
             .header("X-Browser-Year", "2026")
             .header("X-Client-Data", "CKmdygEIlKHLAQiFoM0BCJHLlDA=")
-            .header("X-Goog-Api-Key", GOOGLE_TRANSLATE_API_KEY)
+            .header("X-Goog-Api-Key", requireApiKey())
             .build()
 
         val startTime = System.currentTimeMillis()
@@ -438,7 +454,6 @@ class TranslationManagerGoogleFree(
         private const val TAG = "TranslationGoogleFree"
         private const val TRANSLATE_HTML_URL = "https://translate-pa.googleapis.com/v1/translateHtml"
         private const val TRANSLATE_ORIGIN = "https://twkan.com"
-        private const val GOOGLE_TRANSLATE_API_KEY = "AIzaSyATBXajvzQLTDHEQbcpq0Ihe0vWDHmO520"
         private const val USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
         private val CONTENT_TYPE_JSON_PROTOBUF = "application/json+protobuf"

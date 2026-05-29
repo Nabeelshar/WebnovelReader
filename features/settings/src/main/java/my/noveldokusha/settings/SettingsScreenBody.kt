@@ -47,6 +47,7 @@ internal fun SettingsScreenBody(
     onDownloadTranslationModel: (lang: String) -> Unit,
     onRemoveTranslationModel: (lang: String) -> Unit,
     onCheckForUpdatesManual: () -> Unit,
+    onGoogleTranslateApiKeyChange: (String) -> Unit,
     onGeminiApiKeyChange: (String) -> Unit,
     onGeminiModelChange: (String) -> Unit,
     onPreferOnlineChange: (Boolean) -> Unit,
@@ -81,9 +82,11 @@ internal fun SettingsScreenBody(
             )
             HorizontalDivider()
             SettingsGeminiTranslation(
+                googleTranslateApiKey = state.googleTranslateApiKey.value,
                 geminiApiKey = state.geminiApiKey.value,
                 geminiModel = state.geminiModel.value,
                 preferOnlineTranslation = state.preferOnlineTranslation.value,
+                onGoogleTranslateApiKeyChange = onGoogleTranslateApiKeyChange,
                 onGeminiApiKeyChange = onGeminiApiKeyChange,
                 onGeminiModelChange = onGeminiModelChange,
                 onPreferOnlineChange = onPreferOnlineChange
@@ -141,6 +144,7 @@ private fun Preview() {
                         autoUpdateEnabled = remember { mutableStateOf(true) },
                         autoUpdateIntervalHours = remember { mutableIntStateOf(24) },
                     ),
+                    googleTranslateApiKey = remember { derivedStateOf { "" } },
                     geminiApiKey = remember { derivedStateOf { "" } },
                     geminiModel = remember { derivedStateOf { "" } },
                     preferOnlineTranslation = remember { derivedStateOf { false } },
@@ -154,6 +158,7 @@ private fun Preview() {
                 onDownloadTranslationModel = { },
                 onRemoveTranslationModel = { },
                 onCheckForUpdatesManual = { },
+                onGoogleTranslateApiKeyChange = { },
                 onGeminiApiKeyChange = { },
                 onGeminiModelChange = { },
                 onPreferOnlineChange = { },

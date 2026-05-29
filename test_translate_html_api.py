@@ -5,6 +5,8 @@ Test Google Translate widget translateHtml API (same as WebnovelReader / twkan.c
 
 Usage:
   pip install requests
+  set GOOGLE_TRANSLATE_API_KEY=AIzaSy...   # Windows
+  export GOOGLE_TRANSLATE_API_KEY=AIzaSy...  # Linux/macOS
   python test_translate_html_api.py
   python test_translate_html_api.py --source auto --target en
   python test_translate_html_api.py --find-limit
@@ -15,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -39,8 +42,18 @@ except ImportError:
     sys.exit(1)
 
 TRANSLATE_HTML_URL = "https://translate-pa.googleapis.com/v1/translateHtml"
-GOOGLE_API_KEY = "AIzaSyATBXajvzQLTDHEQbcpq0Ihe0vWDHmO520"
 ORIGIN = "https://twkan.com"
+
+
+def get_api_key() -> str:
+    key = os.environ.get("GOOGLE_TRANSLATE_API_KEY", "").strip()
+    if not key:
+        print(
+            "Set GOOGLE_TRANSLATE_API_KEY (see docs/GOOGLE_TRANSLATE_API_KEY.md).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return key
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
@@ -59,7 +72,7 @@ def build_tagged_html(paragraphs: list[str]) -> str:
     return "".join(f"<a i={i}>\n    {p}</a>" for i, p in enumerate(paragraphs))
 
 
-def request_headers() -> dict[str, str]:
+def request_headers(api_key: str) -> dict[str, str]:
     return {
         "Accept": "*/*",
         "Accept-Language": "en-US,en;q=0.9",
@@ -77,7 +90,7 @@ def request_headers() -> dict[str, str]:
         "X-Browser-Validation": "+f/6R40gd6znZQYfwfSnAdnLwLk=",
         "X-Browser-Year": "2026",
         "X-Client-Data": "CKmdygEIlKHLAQiFoM0BCJHLlDA=",
-        "X-Goog-Api-Key": GOOGLE_API_KEY,
+        "X-Goog-Api-Key": api_key,
     }
 
 
@@ -93,7 +106,7 @@ def translate_html(
     r = requests.post(
         TRANSLATE_HTML_URL,
         data=payload.encode("utf-8"),
-        headers=request_headers(),
+        headers=request_headers(get_api_key()),
         timeout=timeout,
     )
     return r.status_code, r.text, payload_bytes

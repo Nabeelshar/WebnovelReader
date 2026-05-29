@@ -22,25 +22,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import my.noveldoksuha.coreui.theme.ColorAccent
 import my.noveldoksuha.coreui.theme.textPadding
-import my.noveldokusha.settings.R
 
 @Composable
 internal fun SettingsGeminiTranslation(
+    googleTranslateApiKey: String,
     geminiApiKey: String,
     geminiModel: String,
     preferOnlineTranslation: Boolean,
+    onGoogleTranslateApiKeyChange: (String) -> Unit,
     onGeminiApiKeyChange: (String) -> Unit,
     onGeminiModelChange: (String) -> Unit,
     onPreferOnlineChange: (Boolean) -> Unit,
 ) {
+    var googleKeyText by remember(googleTranslateApiKey) { mutableStateOf(googleTranslateApiKey) }
     var apiKeyText by remember(geminiApiKey) { mutableStateOf(geminiApiKey) }
     var modelText by remember(geminiModel) { mutableStateOf(geminiModel) }
-    
+
     Column {
         Text(
             text = "Translation Services",
@@ -48,21 +48,28 @@ internal fun SettingsGeminiTranslation(
             modifier = Modifier.textPadding(),
             color = ColorAccent
         )
-        
-        // Show active service
+
         Text(
-            text = if (geminiApiKey.isNotBlank() && preferOnlineTranslation) 
-                "Active: Google Gemini API" 
-            else 
-                "Active: Google Translate (Free)",
+            text = when {
+                geminiApiKey.isNotBlank() && preferOnlineTranslation ->
+                    "Active: Google Gemini API"
+                googleTranslateApiKey.isNotBlank() ->
+                    "Active: Google Translate"
+                else ->
+                    "Not configured — add Google Translate API key below"
+            },
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.textPadding(),
-            color = if (geminiApiKey.isNotBlank() && preferOnlineTranslation)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.secondary
+            color = when {
+                googleTranslateApiKey.isBlank() && !(geminiApiKey.isNotBlank() && preferOnlineTranslation) ->
+                    MaterialTheme.colorScheme.error
+                geminiApiKey.isNotBlank() && preferOnlineTranslation ->
+                    MaterialTheme.colorScheme.primary
+                else ->
+                    MaterialTheme.colorScheme.secondary
+            }
         )
-        
+
         ListItem(
             headlineContent = {
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -72,12 +79,61 @@ internal fun SettingsGeminiTranslation(
                     ) {
                         Icon(
                             Icons.Outlined.Key,
-                            null,
+                            contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Gemini API Key",
+                            text = "Google Translate API key",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = googleKeyText,
+                        onValueChange = {
+                            googleKeyText = it
+                            onGoogleTranslateApiKeyChange(it)
+                        },
+                        label = { Text("Required for free translation") },
+                        placeholder = { Text("AIzaSy...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "How to get a free key (no billing):\n" +
+                            "1. Open translate.google.com in Chrome\n" +
+                            "2. Press F12 → Network tab → filter: translateHtml\n" +
+                            "3. Translate any word on the page\n" +
+                            "4. Click the translateHtml request\n" +
+                            "5. Copy x-goog-api-key from Request Headers\n" +
+                            "6. Paste here\n\n" +
+                            "Full guide: docs/GOOGLE_TRANSLATE_API_KEY.md in the project repo.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ListItem(
+            headlineContent = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Outlined.Key,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Gemini API Key (optional)",
                             style = MaterialTheme.typography.titleSmall
                         )
                     }
@@ -89,25 +145,25 @@ internal fun SettingsGeminiTranslation(
                             onGeminiApiKeyChange(it)
                         },
                         label = { Text("Enter your Gemini API key(s)") },
-                        placeholder = { Text("AIzaSy...\\nAIzaSy...") },
+                        placeholder = { Text("AIzaSy...\nAIzaSy...") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2,
                         maxLines = 5
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Get your free API key at: ai.google.dev\n" +
-                               "Tip: Enter multiple API keys (one per line or separated by semicolon) to avoid rate limits\n\n" +
-                               "Note: If no API key is provided, the app will automatically use Google Translate (Free) instead.",
+                        text = "Get a free key at: ai.google.dev\n" +
+                            "Tip: Multiple keys (one per line) help avoid rate limits.\n" +
+                            "When enabled below, Gemini is used first; Google Translate is the fallback.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         ListItem(
             headlineContent = {
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -130,17 +186,17 @@ internal fun SettingsGeminiTranslation(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Default: gemini-2.5-flash-lite\n" +
-                               "Examples: gemini-flash-lite-latest, gemini-2.5-flash-lite\n" +
-                               "Find models at: ai.google.dev/gemini-api/docs/models",
+                            "Examples: gemini-flash-lite-latest, gemini-2.5-flash-lite\n" +
+                            "Models: ai.google.dev/gemini-api/docs/models",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         ListItem(
             headlineContent = {
                 Text(text = "Use Gemini API")
@@ -148,11 +204,10 @@ internal fun SettingsGeminiTranslation(
             supportingContent = {
                 Text(
                     text = if (apiKeyText.isNotBlank()) {
-                        "When enabled, uses Google Gemini API for higher quality translations. " +
-                        "When disabled or if API key is not set, uses free Google Translate instead."
+                        "When enabled, uses Gemini first, then Google Translate if Gemini fails. " +
+                            "Google Translate key above is still required as fallback."
                     } else {
-                        "Configure Gemini API key above to enable this option. " +
-                        "Currently using Google Translate (Free) - no API key required."
+                        "Add a Gemini API key to enable. Otherwise only Google Translate is used."
                     },
                     style = MaterialTheme.typography.bodySmall
                 )

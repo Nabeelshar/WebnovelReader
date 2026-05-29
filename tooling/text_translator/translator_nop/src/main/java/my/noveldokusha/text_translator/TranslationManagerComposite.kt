@@ -136,10 +136,10 @@ class TranslationManagerComposite(
      * Get current active translator name for UI display
      */
     fun getActiveTranslatorName(): String {
-        return if (hasGeminiApiKey() && appPreferences.TRANSLATION_PREFER_ONLINE.value) {
-            "Google Gemini API"
-        } else {
-            "Google Translate (Free)"
+        return when {
+            hasGeminiApiKey() && appPreferences.TRANSLATION_PREFER_ONLINE.value -> "Google Gemini API"
+            appPreferences.TRANSLATION_GOOGLE_API_KEY.value.isNotBlank() -> "Google Translate"
+            else -> "Not configured"
         }
     }
 

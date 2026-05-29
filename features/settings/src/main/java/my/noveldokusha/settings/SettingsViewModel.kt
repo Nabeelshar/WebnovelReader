@@ -66,6 +66,7 @@ internal class SettingsViewModel @Inject constructor(
                 viewModelScope
             )
         ),
+        googleTranslateApiKey = appPreferences.TRANSLATION_GOOGLE_API_KEY.state(viewModelScope),
         geminiApiKey = appPreferences.TRANSLATION_GEMINI_API_KEY.state(viewModelScope),
         geminiModel = appPreferences.TRANSLATION_GEMINI_MODEL.state(viewModelScope),
         preferOnlineTranslation = appPreferences.TRANSLATION_PREFER_ONLINE.state(viewModelScope),
@@ -117,6 +118,10 @@ internal class SettingsViewModel @Inject constructor(
 
     fun onThemeChange(themes: Themes) {
         appPreferences.THEME_ID.value = themes.toPreferenceTheme
+    }
+
+    fun onGoogleTranslateApiKeyChange(apiKey: String) {
+        appPreferences.TRANSLATION_GOOGLE_API_KEY.value = apiKey
     }
 
     fun onGeminiApiKeyChange(apiKey: String) {

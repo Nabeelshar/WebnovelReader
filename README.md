@@ -10,8 +10,9 @@ Search from a large catalog of content, open your pick and just enjoy.
 Copyright © 2023, [nani](https://github.com/nanihadesuka), Released under [GPL-3](LICENSE) FOSS
 
 ## Features
-  - **Live translation** - Google Translate (free, no key) with optional Gemini AI
+  - **Live translation** - Google Translate with optional Gemini AI
   - **Auto-detect source language** when translating chapters
+  - **Bring your own Google Translate key** (free; see [docs/GOOGLE_TRANSLATE_API_KEY.md](docs/GOOGLE_TRANSLATE_API_KEY.md))
   - **Multiple sources** from where to read novels:
     - **Chinese Sources** (with GBK encoding support):
       - 69书吧 (69shuba.com) - With automatic Cloudflare bypass
