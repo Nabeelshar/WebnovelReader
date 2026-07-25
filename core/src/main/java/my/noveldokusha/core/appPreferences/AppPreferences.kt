@@ -128,6 +128,9 @@ class AppPreferences @Inject constructor(
             ListLayoutMode.VerticalGrid
         ) { enumValueOf(it) }
     }
+    val METADATA_TRANSLATION_ENABLED = object : Preference<Boolean>("METADATA_TRANSLATION_ENABLED") {
+        override var value by SharedPreference_Boolean(name, preferences, false)
+    }
     val GLOBAL_TRANSLATION_ENABLED = object : Preference<Boolean>("GLOBAL_TRANSLATION_ENABLED") {
         override var value by SharedPreference_Boolean(name, preferences, false)
     }

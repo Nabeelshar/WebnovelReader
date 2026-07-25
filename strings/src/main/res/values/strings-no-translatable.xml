@@ -38,5 +38,7 @@
     <string translatable="false" name="source_name_lnmtl">LNMTL</string>
     <string translatable="false" name="source_name_wtrlab">WtrLab</string>
     <string translatable="false" name="source_name_jaomix">Jaomix</string>
+    <string translatable="false" name="source_name_qqbook">QQ阅读 (book.qq.com)</string>
+    <string translatable="false" name="source_name_wfxstw">微風小說 (wfxs.tw)</string>
 
 </resources>

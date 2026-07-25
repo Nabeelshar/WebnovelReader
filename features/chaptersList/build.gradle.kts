@@ -15,6 +15,7 @@ dependencies {
     implementation(projects.scraper)
     implementation(projects.navigation)
     implementation(projects.tooling.localDatabase)
+    implementation(projects.tooling.textTranslator.domain)
 
     implementation(libs.material)
     implementation(libs.androidx.lifecycle.livedata.ktx)

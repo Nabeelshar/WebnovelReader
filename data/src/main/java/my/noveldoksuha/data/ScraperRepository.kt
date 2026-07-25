@@ -37,6 +37,12 @@ class ScraperRepository @Inject constructor(
         }.flowOn(Dispatchers.Default)
     }
 
+    fun getCompatibleSource(url: String): SourceInterface? =
+        scraper.getCompatibleSource(url)
+
+    fun getCompatibleSourceCatalog(url: String): SourceInterface.Catalog? =
+        scraper.getCompatibleSourceCatalog(url)
+
     fun sourcesLanguagesListFlow(): Flow<List<LanguageItem>> {
         return appPreferences.SOURCES_LANGUAGES_ISO639_1.flow()
             .map { activeLanguages ->

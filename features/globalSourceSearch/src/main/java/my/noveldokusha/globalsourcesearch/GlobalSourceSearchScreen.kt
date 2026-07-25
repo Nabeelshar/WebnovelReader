@@ -26,6 +26,7 @@ import my.noveldokusha.feature.local_database.BookMetadata
 internal fun GlobalSourceSearchScreen(
     searchInput: String,
     listSources: List<SourceResults>,
+    translatedTitles: Map<String, String>,
     onSearchInputChange: (String) -> Unit,
     onSearchInputSubmit: (String) -> Unit,
     onBookClick: (book: BookMetadata) -> Unit,
@@ -67,6 +68,7 @@ internal fun GlobalSourceSearchScreen(
         content = { innerPadding ->
             GlobalSourceSearchScreenBody(
                 listSources = listSources,
+                translatedTitles = translatedTitles,
                 contentPadding = innerPadding,
                 onBookClick = onBookClick
             )
@@ -81,6 +83,7 @@ private fun PreviewView() {
         GlobalSourceSearchScreen(
             searchInput = "Some text here",
             listSources = listOf(),
+            translatedTitles = emptyMap(),
             onSearchInputChange = { },
             onSearchInputSubmit = { },
             onBookClick = { },

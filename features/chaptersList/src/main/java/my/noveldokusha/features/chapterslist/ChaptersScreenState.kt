@@ -2,6 +2,7 @@ package my.noveldokusha.features.chapterslist
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateMap
@@ -19,6 +20,8 @@ internal data class ChaptersScreenState(
     val settingChapterSort: MutableState<TernaryState>,
     val isLocalSource: State<Boolean>,
     val isRefreshable: State<Boolean>,
+    val translatedTitle: MutableState<String> = mutableStateOf(""),
+    val translatedDescription: MutableState<String> = mutableStateOf(""),
 ) {
 
     val isInSelectionMode = derivedStateOf { selectedChaptersUrl.size != 0 }

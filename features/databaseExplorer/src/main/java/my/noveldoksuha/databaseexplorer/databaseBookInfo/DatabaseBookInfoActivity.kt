@@ -49,6 +49,8 @@ class DatabaseBookInfoActivity : BaseActivity() {
                 SetSystemBarTransparent()
                 DatabaseBookInfoScreen(
                     state = viewModel.state,
+                    translatedTitle = viewModel.translatedTitle.value,
+                    translatedDescription = viewModel.translatedDescription.value,
                     onSourcesClick = ::openGlobalSearchPage,
                     onGenresClick = ::openSearchPageByGenres,
                     onBookClick = ::openBookInfo,

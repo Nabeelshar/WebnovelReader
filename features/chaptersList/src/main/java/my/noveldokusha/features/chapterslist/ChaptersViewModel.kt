@@ -26,7 +26,10 @@ import my.noveldokusha.core.isLocalUri
 import my.noveldokusha.core.utils.StateExtra_String
 import my.noveldokusha.core.utils.toState
 import my.noveldokusha.feature.local_database.ChapterWithContext
+import my.noveldokusha.core.Response
 import my.noveldokusha.scraper.Scraper
+import my.noveldokusha.scraper.SourceInterface
+import my.noveldokusha.text_translator.domain.MetadataTranslator
 import javax.inject.Inject
 
 interface ChapterStateBundle {
@@ -45,6 +48,7 @@ internal class ChaptersViewModel @Inject constructor(
     private val downloaderRepository: DownloaderRepository,
     private val chaptersRepository: ChaptersRepository,
     private val epubImporterRepository: EpubImporterRepository,
+    private val metadataTranslator: MetadataTranslator,
     stateHandle: SavedStateHandle,
 ) : BaseViewModel(), ChapterStateBundle {
 
@@ -59,13 +63,13 @@ internal class ChaptersViewModel @Inject constructor(
     @Volatile
     private var lastSelectedChapterUrl: String? = null
     private val source = scraper.getCompatibleSource(bookUrl)
-    private val book = appRepository.libraryBooks.getFlow(bookUrl)
+    private val bookFlow = appRepository.libraryBooks.getFlow(bookUrl)
         .filterNotNull()
         .map(ChaptersScreenState::BookState)
-        .toState(
-            viewModelScope,
-            ChaptersScreenState.BookState(title = bookTitle, url = bookUrl, coverImageUrl = null)
-        )
+    private val book = bookFlow.toState(
+        viewModelScope,
+        ChaptersScreenState.BookState(title = bookTitle, url = bookUrl, coverImageUrl = null)
+    )
 
     val state = ChaptersScreenState(
         book = book,
@@ -95,13 +99,32 @@ internal class ChaptersViewModel @Inject constructor(
             if (appRepository.libraryBooks.get(bookUrl) != null)
                 return@launch
 
-            chaptersRepository.downloadBookMetadata(bookUrl = bookUrl, bookTitle = bookTitle)
+            val resolvedTitle = if (bookTitle.startsWith("http")) {
+                try {
+                    val catalog = scraper.getCompatibleSourceCatalog(bookUrl)
+                    if (catalog != null) {
+                        when (val result = catalog.getCatalogSearch(0, bookTitle)) {
+                            is Response.Success -> result.data.list.firstOrNull()?.title ?: bookTitle
+                            else -> bookTitle
+                        }
+                    } else bookTitle
+                } catch (_: Exception) { bookTitle }
+            } else bookTitle
+
+            chaptersRepository.downloadBookMetadata(bookUrl = bookUrl, bookTitle = resolvedTitle)
         }
 
         viewModelScope.launch {
             chaptersRepository.getChaptersSortedFlow(bookUrl = bookUrl).collect {
                 state.chapters.clear()
                 state.chapters.addAll(it)
+            }
+        }
+
+        viewModelScope.launch {
+            bookFlow.collect { b ->
+                state.translatedTitle.value = metadataTranslator.translate(b.title)
+                state.translatedDescription.value = metadataTranslator.translate(b.description)
             }
         }
     }

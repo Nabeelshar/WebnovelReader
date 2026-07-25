@@ -32,6 +32,7 @@ internal fun LibraryPageBody(
     list: List<BookWithContext>,
     onClick: (BookWithContext) -> Unit,
     onLongClick: (BookWithContext) -> Unit,
+    translatedTitles: Map<String, String> = emptyMap(),
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(160.dp),
@@ -44,7 +45,7 @@ internal fun LibraryPageBody(
             val interactionSource = remember { MutableInteractionSource() }
             Box {
                 BookImageButtonView(
-                    title = it.book.title,
+                    title = translatedTitles[it.book.url] ?: it.book.title,
                     coverImageModel = rememberResolvedBookImagePath(
                         bookUrl = it.book.url,
                         imagePath = it.book.coverImageUrl

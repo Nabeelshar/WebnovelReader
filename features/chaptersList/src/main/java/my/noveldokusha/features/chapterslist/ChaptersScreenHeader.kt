@@ -49,6 +49,8 @@ internal fun ChaptersScreenHeader(
     sourceCatalogName: String,
     numberOfChapters: Int,
     paddingValues: PaddingValues,
+    translatedTitle: String = "",
+    translatedDescription: String = "",
     modifier: Modifier = Modifier,
     onCoverLongClick: () -> Unit,
     onGlobalSearchClick: (input: String) -> Unit,
@@ -129,8 +131,9 @@ internal fun ChaptersScreenHeader(
                         .weight(1f),
                 ) {
                     SelectionContainer {
+                        val displayTitle = translatedTitle.ifBlank { bookState.title }
                         Text(
-                            text = bookState.title,
+                            text = displayTitle,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             maxLines = 5,
@@ -157,7 +160,11 @@ internal fun ChaptersScreenHeader(
                 }
             }
             SelectionContainer {
-                val text by remember(bookState.description) { derivedStateOf { bookState.description.trim() } }
+                val text by remember(bookState.description, translatedDescription) {
+                    derivedStateOf {
+                        (translatedDescription.ifBlank { bookState.description }).trim()
+                    }
+                }
                 ExpandableText(
                     text = text,
                     linesForExpand = 4

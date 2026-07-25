@@ -32,10 +32,12 @@ internal fun SettingsGeminiTranslation(
     geminiApiKey: String,
     geminiModel: String,
     preferOnlineTranslation: Boolean,
+    metadataTranslationEnabled: Boolean,
     onGoogleTranslateApiKeyChange: (String) -> Unit,
     onGeminiApiKeyChange: (String) -> Unit,
     onGeminiModelChange: (String) -> Unit,
     onPreferOnlineChange: (Boolean) -> Unit,
+    onMetadataTranslationEnabledChange: (Boolean) -> Unit,
 ) {
     var googleKeyText by remember(googleTranslateApiKey) { mutableStateOf(googleTranslateApiKey) }
     var apiKeyText by remember(geminiApiKey) { mutableStateOf(geminiApiKey) }
@@ -217,6 +219,26 @@ internal fun SettingsGeminiTranslation(
                     checked = preferOnlineTranslation,
                     onCheckedChange = onPreferOnlineChange,
                     enabled = apiKeyText.isNotBlank()
+                )
+            }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ListItem(
+            headlineContent = {
+                Text(text = "Translate book titles & descriptions")
+            },
+            supportingContent = {
+                Text(
+                    text = "When enabled, book metadata (title, description) will be translated via the active translation service.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            },
+            trailingContent = {
+                Switch(
+                    checked = metadataTranslationEnabled,
+                    onCheckedChange = onMetadataTranslationEnabledChange,
                 )
             }
         )

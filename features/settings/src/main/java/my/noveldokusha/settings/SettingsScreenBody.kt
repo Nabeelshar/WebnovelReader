@@ -51,6 +51,7 @@ internal fun SettingsScreenBody(
     onGeminiApiKeyChange: (String) -> Unit,
     onGeminiModelChange: (String) -> Unit,
     onPreferOnlineChange: (Boolean) -> Unit,
+    onMetadataTranslationEnabledChange: (Boolean) -> Unit,
 ) {
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()),
@@ -86,10 +87,12 @@ internal fun SettingsScreenBody(
                 geminiApiKey = state.geminiApiKey.value,
                 geminiModel = state.geminiModel.value,
                 preferOnlineTranslation = state.preferOnlineTranslation.value,
+                metadataTranslationEnabled = state.metadataTranslationEnabled.value,
                 onGoogleTranslateApiKeyChange = onGoogleTranslateApiKeyChange,
                 onGeminiApiKeyChange = onGeminiApiKeyChange,
                 onGeminiModelChange = onGeminiModelChange,
-                onPreferOnlineChange = onPreferOnlineChange
+                onPreferOnlineChange = onPreferOnlineChange,
+                onMetadataTranslationEnabledChange = onMetadataTranslationEnabledChange,
             )
         }
         HorizontalDivider()
@@ -148,6 +151,7 @@ private fun Preview() {
                     geminiApiKey = remember { derivedStateOf { "" } },
                     geminiModel = remember { derivedStateOf { "" } },
                     preferOnlineTranslation = remember { derivedStateOf { false } },
+                    metadataTranslationEnabled = remember { derivedStateOf { false } },
                 ),
                 onFollowSystem = { },
                 onThemeSelected = { },
@@ -162,6 +166,7 @@ private fun Preview() {
                 onGeminiApiKeyChange = { },
                 onGeminiModelChange = { },
                 onPreferOnlineChange = { },
+                onMetadataTranslationEnabledChange = { },
             )
         }
     }

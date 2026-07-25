@@ -16,6 +16,7 @@ import my.noveldokusha.core.appPreferences.AppPreferences
 import my.noveldokusha.core.appPreferences.TernaryState
 import my.noveldokusha.core.domain.LibraryCategory
 import my.noveldokusha.core.utils.toState
+import my.noveldokusha.text_translator.domain.MetadataTranslator
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,11 +24,30 @@ internal class LibraryPageViewModel @Inject constructor(
     private val appRepository: AppRepository,
     private val preferences: AppPreferences,
     private val toasty: Toasty,
-
+    private val metadataTranslator: MetadataTranslator,
 ) : BaseViewModel() {
     var isPullRefreshing by mutableStateOf(false)
     val listReading by createPageList(isShowCompleted = false)
     val listCompleted by createPageList(isShowCompleted = true)
+    val translatedTitles = mutableStateOf(mapOf<String, String>())
+
+    init {
+        viewModelScope.launch {
+            appRepository.libraryBooks.getBooksInLibraryWithContextFlow.collect { books ->
+                val toTranslate = books
+                    .map { it.book.url to it.book.title }
+                    .filter { (url, _) -> url !in translatedTitles.value }
+                    .distinctBy { (_, title) -> title }
+                if (toTranslate.isEmpty()) return@collect
+                toTranslate.forEach { (url, title) ->
+                    val translated = metadataTranslator.translate(title)
+                    if (translated != title) {
+                        translatedTitles.value = translatedTitles.value + (url to translated)
+                    }
+                }
+            }
+        }
+    }
 
     private fun createPageList(isShowCompleted: Boolean) = appRepository.libraryBooks
         .getBooksInLibraryWithContextFlow

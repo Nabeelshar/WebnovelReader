@@ -20,6 +20,7 @@ data class SettingsScreenState(
     val geminiApiKey: State<String>,
     val geminiModel: State<String>,
     val preferOnlineTranslation: State<Boolean>,
+    val metadataTranslationEnabled: State<Boolean>,
 ) {
     data class UpdateApp(
         val currentAppVersion: String,

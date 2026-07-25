@@ -11,6 +11,7 @@ import my.noveldokusha.core.utils.StateExtra_String
 import my.noveldokusha.scraper.DatabaseInterface
 import my.noveldokusha.scraper.Scraper
 import my.noveldokusha.feature.local_database.BookMetadata
+import my.noveldokusha.text_translator.domain.MetadataTranslator
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -30,7 +31,8 @@ interface DatabaseBookInfoStateBundle {
 @HiltViewModel
 class DatabaseBookInfoViewModel @Inject constructor(
     stateHandle: SavedStateHandle,
-    scraper: Scraper
+    scraper: Scraper,
+    private val metadataTranslator: MetadataTranslator,
 ) : BaseViewModel(), DatabaseBookInfoStateBundle {
     override var databaseUrlBase: String by StateExtra_String(stateHandle)
     override var bookUrl: String by StateExtra_String(stateHandle)
@@ -57,10 +59,17 @@ class DatabaseBookInfoViewModel @Inject constructor(
 
     )
 
+    val translatedTitle = mutableStateOf("")
+    val translatedDescription = mutableStateOf("")
+
     init {
         viewModelScope.launch {
             database.getBookData(bookMetadata.url)
-                .onSuccess { state.book.value = it }
+                .onSuccess {
+                    state.book.value = it
+                    translatedTitle.value = metadataTranslator.translate(it.title)
+                    translatedDescription.value = metadataTranslator.translate(it.description)
+                }
                 .onError { Timber.d(it.exception) }
         }
     }

@@ -127,6 +127,7 @@ internal fun LibraryScreenBody(
                 }
                 LibraryPageBody(
                     list = list,
+                    translatedTitles = viewModel.translatedTitles.value,
                     onClick = onBookClick,
                     onLongClick = onBookLongClick
                 )

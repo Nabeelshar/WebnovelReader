@@ -46,6 +46,8 @@ import my.noveldokusha.feature.local_database.BookMetadata
 @Composable
 internal fun DatabaseBookInfoScreen(
     state: DatabaseBookInfoState,
+    translatedTitle: String = "",
+    translatedDescription: String = "",
     onSourcesClick: () -> Unit,
     onGenresClick: (List<SearchGenre>) -> Unit,
     onBookClick: (BookMetadata) -> Unit,
@@ -78,7 +80,7 @@ internal fun DatabaseBookInfoScreen(
                         ),
                         title = {
                             Text(
-                                text = state.book.value.title,
+                                text = translatedTitle.ifBlank { state.book.value.title },
                                 style = MaterialTheme.typography.titleSmall,
                                 color = titleColor
                             )
@@ -102,6 +104,8 @@ internal fun DatabaseBookInfoScreen(
             DatabaseBookInfoScreenBody(
                 state = state,
                 scrollState = scrollState,
+                translatedTitle = translatedTitle,
+                translatedDescription = translatedDescription,
                 onSourcesClick = onSourcesClick,
                 onGenresClick = onGenresClick,
                 onBookClick = onBookClick,

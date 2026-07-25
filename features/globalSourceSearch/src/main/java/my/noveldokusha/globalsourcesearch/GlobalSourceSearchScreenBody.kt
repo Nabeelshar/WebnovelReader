@@ -41,6 +41,7 @@ import my.noveldokusha.feature.local_database.BookMetadata
 @Composable
 internal fun GlobalSourceSearchScreenBody(
     listSources: List<SourceResults>,
+    translatedTitles: Map<String, String>,
     contentPadding: PaddingValues,
     onBookClick: (book: BookMetadata) -> Unit
 ) {
@@ -59,6 +60,7 @@ internal fun GlobalSourceSearchScreenBody(
             )
             SourceListView(
                 list = entry.fetchIterator.list,
+                translatedTitles = translatedTitles,
                 loadState = entry.fetchIterator.state,
                 error = entry.fetchIterator.error?.message,
                 onBookClick = onBookClick,
@@ -71,6 +73,7 @@ internal fun GlobalSourceSearchScreenBody(
 @Composable
 private fun SourceListView(
     list: List<BookResult>,
+    translatedTitles: Map<String, String>,
     loadState: IteratorState,
     error: String?,
     onBookClick: (book: BookMetadata) -> Unit,
@@ -94,7 +97,7 @@ private fun SourceListView(
         items(list) {
             val interactionSource = remember { MutableInteractionSource() }
             BookImageButtonView(
-                title = it.title,
+                title = translatedTitles[it.url] ?: it.title,
                 coverImageModel = rememberResolvedBookImagePath(
                     bookUrl = it.url,
                     imagePath = it.coverImageUrl
@@ -191,6 +194,7 @@ private fun PreviewView() {
     InternalTheme {
         GlobalSourceSearchScreenBody(
             listSources = list,
+            translatedTitles = emptyMap(),
             onBookClick = {},
             contentPadding = PaddingValues(),
         )

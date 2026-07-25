@@ -63,6 +63,8 @@ import my.noveldokusha.feature.local_database.BookMetadata
 internal fun DatabaseBookInfoScreenBody(
     state: DatabaseBookInfoState,
     scrollState: ScrollState,
+    translatedTitle: String = "",
+    translatedDescription: String = "",
     onSourcesClick: () -> Unit,
     onGenresClick: (genresIds: List<SearchGenre>) -> Unit,
     onBookClick: (book: BookMetadata) -> Unit,
@@ -123,7 +125,7 @@ internal fun DatabaseBookInfoScreenBody(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = state.book.value.title,
+                            text = translatedTitle.ifBlank { state.book.value.title },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 16.dp)
@@ -163,7 +165,7 @@ internal fun DatabaseBookInfoScreenBody(
         ) {
             SelectionContainer {
                 ExpandableText(
-                    text = state.book.value.description,
+                    text = translatedDescription.ifBlank { state.book.value.description },
                     linesForExpand = 8,
                     modifier = Modifier.fillMaxWidth()
                 )

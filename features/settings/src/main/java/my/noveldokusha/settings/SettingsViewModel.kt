@@ -70,6 +70,7 @@ internal class SettingsViewModel @Inject constructor(
         geminiApiKey = appPreferences.TRANSLATION_GEMINI_API_KEY.state(viewModelScope),
         geminiModel = appPreferences.TRANSLATION_GEMINI_MODEL.state(viewModelScope),
         preferOnlineTranslation = appPreferences.TRANSLATION_PREFER_ONLINE.state(viewModelScope),
+        metadataTranslationEnabled = appPreferences.METADATA_TRANSLATION_ENABLED.state(viewModelScope),
     )
 
     init {
@@ -134,6 +135,10 @@ internal class SettingsViewModel @Inject constructor(
 
     fun onPreferOnlineTranslationChange(prefer: Boolean) {
         appPreferences.TRANSLATION_PREFER_ONLINE.value = prefer
+    }
+
+    fun onMetadataTranslationEnabledChange(enabled: Boolean) {
+        appPreferences.METADATA_TRANSLATION_ENABLED.value = enabled
     }
 
     private fun updateDatabaseSize() = viewModelScope.launch {

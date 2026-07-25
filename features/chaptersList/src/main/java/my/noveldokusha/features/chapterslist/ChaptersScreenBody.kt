@@ -74,6 +74,8 @@ internal fun ChaptersScreenBody(
                     ),
                     numberOfChapters = state.chapters.size,
                     paddingValues = innerPadding,
+                    translatedTitle = state.translatedTitle.value,
+                    translatedDescription = state.translatedDescription.value,
                     modifier = Modifier.padding(bottom = 12.dp),
                     onCoverLongClick = onCoverLongClick,
                     onGlobalSearchClick = onGlobalSearchClick,
