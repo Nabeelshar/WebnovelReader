@@ -1,0 +1,36 @@
+name: Verify
+
+# Compiles the changed modules and runs the scraper unit tests on every
+# push to master, on pull requests, and on manual dispatch. This is the
+# fast feedback loop for source changes: it catches compile errors,
+# duplicate source ids, base URLs missing a trailing slash, and sources
+# that getCompatibleSource() cannot resolve (see ScraperTest).
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Compile + scraper unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Compile changed modules + run scraper tests
+        run: |
+          ./gradlew :scraper:compileDebugKotlin \
+            :tooling:local_database:compileDebugKotlin \
+            :tooling:text_translator:domain:compileDebugKotlin \
+            :app:testDebugUnitTest --tests "my.noveldokusha.ScraperTest"
