@@ -1,0 +1,44 @@
+name: Publish Release
+
+on:
+  workflow_dispatch: # Run manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  buildRelease:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Setup APK signing
+        run: |
+          echo -n ${{ secrets.SIGNING_KEY }} | base64 -d > app/storeFile.jks
+          echo storeFile=storeFile.jks > custom.properties
+          echo storePassword=${{ secrets.KEY_STORE_PASSWORD }} >> custom.properties
+          echo keyAlias=${{ secrets.ALIAS }} >> custom.properties
+          echo keyPassword=${{ secrets.KEY_PASSWORD }} >> custom.properties
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease -PlocalPropertiesFilePath=custom.properties
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: WebnovelReader v2.4.2
+          tag_name: v2.4.2
+          files: app/build/outputs/apk/release/WebnovelReader_v2.4.2-release.apk
