@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string translatable="false" name="source_name_at">AT</string>
-    <string translatable="false" name="source_name_box_novel">Box Novel</string>
+    <string translatable="false" name="source_name_novelight">Novelight</string>
+    <string translatable="false" name="source_name_novel_archive">Novel Archive</string>
     <string translatable="false" name="source_name_novelhall">NovelHall</string>
     <string translatable="false" name="source_name_novel_updates">Novel Updates</string>
     <string translatable="false" name="source_name_read_novel_full">Read Novel Full</string>
@@ -29,8 +30,6 @@
     <string translatable="false" name="source_name_freewebnovel">FreeWebNovel</string>
     <string translatable="false" name="source_name_novelfull">NovelFull</string>
     <string translatable="false" name="source_name_allnovel">AllNovel</string>
-    <string translatable="false" name="source_name_novelbin_com">NovelBin.com</string>
-    <string translatable="false" name="source_name_readmtl">ReadMTL</string>
     <string translatable="false" name="source_name_newnovel">NewNovel</string>
     <string translatable="false" name="source_name_sonicmtl">SonicMTL</string>
     <string translatable="false" name="source_name_nobadnovel">NoBadNovel</string>
