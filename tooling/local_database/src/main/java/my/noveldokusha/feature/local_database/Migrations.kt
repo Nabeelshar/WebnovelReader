@@ -42,6 +42,22 @@ internal fun databaseMigrations() = arrayOf(
             ON ChapterTranslation (chapterUrl, sourceLang, targetLang)
         """)
     },
+    migration(9) {
+        it.execSQL("""
+            CREATE TABLE IF NOT EXISTS MetadataTranslation (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                originalText TEXT NOT NULL,
+                sourceLang TEXT NOT NULL,
+                targetLang TEXT NOT NULL,
+                translatedText TEXT NOT NULL,
+                timestamp INTEGER NOT NULL
+            )
+        """)
+        it.execSQL("""
+            CREATE UNIQUE INDEX IF NOT EXISTS index_MetadataTranslation_originalText_sourceLang_targetLang
+            ON MetadataTranslation (originalText, sourceLang, targetLang)
+        """)
+    },
 )
 
 internal fun migration(vi: Int, migrate: (SupportSQLiteDatabase) -> Unit) =
