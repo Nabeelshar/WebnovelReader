@@ -48,8 +48,13 @@ class SourcesCatalogTest {
     }
 
     @Test
-    fun source__box_novel() {
-        checkSourceCanBeOpened("Box Novel")
+    fun source__novelight() {
+        checkSourceCanBeOpened("Novelight")
+    }
+
+    @Test
+    fun source__novel_archive() {
+        checkSourceCanBeOpened("Novel Archive")
     }
 
     @Test
