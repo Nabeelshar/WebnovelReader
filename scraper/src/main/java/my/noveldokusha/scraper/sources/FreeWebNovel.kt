@@ -15,19 +15,52 @@ import my.noveldokusha.scraper.SourceInterface
 import my.noveldokusha.scraper.TextExtractor
 import my.noveldokusha.scraper.domain.BookResult
 import my.noveldokusha.scraper.domain.ChapterResult
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.net.URI
 
-
+/**
+ * FreeWebNovel — https://freewebnovel.com
+ *
+ * Fixes (2026-11-13):
+ * - [getChapterList] read the title/URL from `selectFirst("a")` on the
+ *   `<a>` element itself, which always returns null: every chapter came
+ *   back with an empty title and a `...null` URL. Read the attributes
+ *   from the element directly.
+ * - [getCatalogSearch] used a raw `Jsoup.connect(...).post()`, bypassing
+ *   the app's NetworkClient (no Cloudflare bypass, no shared cookies or
+ *   user agent) — the site 403s bare requests. It now posts through
+ *   NetworkClient like every other source.
+ * - `baseUrl` had no trailing slash (the unit test requires one) and
+ *   cover/book URLs were built with plain string concatenation, producing
+ *   `https://freewebnovel.comhttps://...` / doubled slashes when the
+ *   attribute was already absolute. URLs are now resolved properly.
+ */
 class FreeWebNovel(
     private val networkClient: NetworkClient
 ) : SourceInterface.Catalog {
     override val id = "freewebnovel"
     override val nameStrId = R.string.source_name_freewebnovel
-    override val baseUrl = "https://freewebnovel.com"
+    override val baseUrl = "https://freewebnovel.com/"
     override val catalogUrl = "https://freewebnovel.com/completed-novel/"
     override val iconUrl = "https://freewebnovel.com/favicon.ico"
     override val language = LanguageCode.ENGLISH
+
+    private fun resolve(url: String): String =
+        if (url.isBlank()) ""
+        else if (url.startsWith("http")) url
+        else URI(baseUrl).resolve(url).toString()
+
+    private fun parseBookList(doc: Document): List<BookResult> =
+        doc.select(".ul-list1 .li-row").mapNotNull { element ->
+            val link = element.selectFirst(".tit a") ?: return@mapNotNull null
+            val coverUrl = element.selectFirst(".pic img")
+                ?.let { it.attr("data-src").ifEmpty { it.attr("src") } } ?: ""
+            BookResult(
+                title = link.text(),
+                url = resolve(link.attr("href")),
+                coverImageUrl = resolve(coverUrl)
+            )
+        }
 
     override suspend fun getChapterTitle(doc: Document): String? =
         withContext(Dispatchers.Default) {
@@ -51,10 +84,8 @@ class FreeWebNovel(
                 networkClient.get(bookUrl)
                     .toDocument()
                     .selectFirst(".pic img")?.attr("src")
-                    ?.let {baseUrl + it}
+                    ?.let { resolve(it) }
             }
-
-
         }
 
     override suspend fun getBookDescription(bookUrl: String): Response<String?> =
@@ -67,7 +98,6 @@ class FreeWebNovel(
             }
         }
 
-
     override suspend fun getChapterList(
         bookUrl: String
     ): Response<List<ChapterResult>> = withContext(Dispatchers.Default) {
@@ -77,8 +107,8 @@ class FreeWebNovel(
                 .select("#idData li a")
                 .map {
                     ChapterResult(
-                        title = it.selectFirst("a")?.attr("title") ?: "",
-                        url = (baseUrl + it.selectFirst("a")?.attr("href"))
+                        title = it.attr("title").ifBlank { it.text() },
+                        url = resolve(it.attr("href"))
                     )
                 }
         }
@@ -91,56 +121,30 @@ class FreeWebNovel(
                 val url = "$baseUrl/completed-novel/$page"
 
                 val doc = networkClient.get(url).toDocument()
-                val books = doc.select(".ul-list1 .li-row")
-                    .mapNotNull { element ->
-                        val link = element.selectFirst(".tit a") ?: return@mapNotNull null
-                        val coverUrl = element.selectFirst(".pic img")
-                            ?.let { it.attr("data-src").ifEmpty { it.attr("src") } } ?: ""
-                        BookResult(
-                            title = link.text(),
-                            url = baseUrl + link.attr("href"),
-                            coverImageUrl = baseUrl + coverUrl
-                        )
-                    }
+                val books = parseBookList(doc)
 
                 PagedList(
                     list = books,
                     index = index,
-                    isLastPage =  books.isEmpty() || doc.selectFirst("a:nth-child(13)") == null
-
+                    isLastPage = books.isEmpty() || doc.selectFirst("a:nth-child(13)") == null
                 )
             }
         }
-
 
     override suspend fun getCatalogSearch(
         index: Int,
         input: String
     ): Response<PagedList<BookResult>> =
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             tryConnect {
                 if (input.isBlank() || index > 0)
                     return@tryConnect PagedList.createEmpty(index = index)
-                val url = "https://freewebnovel.com/search"
-                val doc: Document = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
-                    .data("searchkey", input)
-                    .timeout(10000)
-                    .post()
-                val books = doc.select(".ul-list1 .li-row")
-                    .mapNotNull { element ->
-                        val link = element.selectFirst(".tit a") ?: return@mapNotNull null
-                        val coverUrl = element.selectFirst(".pic img")
-                            ?.let { it.attr("data-src").ifEmpty { it.attr("src") } } ?: ""
-                        BookResult(
-                            title = link.text(),
-                            url = baseUrl + link.attr("href"),
-                            coverImageUrl = baseUrl + coverUrl
-                        )
-                    }
+                val request = postRequest("${baseUrl}search")
+                    .postPayload { add("searchkey", input) }
+                val doc = networkClient.call(request).toDocument()
+                val books = parseBookList(doc)
 
                 PagedList(list = books, index = index, isLastPage = books.isEmpty())
             }
         }
-
 }
