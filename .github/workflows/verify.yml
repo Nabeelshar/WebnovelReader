@@ -27,6 +27,12 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The action's default packages ("tools platform-tools") fail:
+          # the "tools" package no longer exists, so sdkmanager exits 1
+          # ("Warning: Failed to find package 'tools'"). platform-tools
+          # is all we need here; Gradle installs the rest itself.
+          packages: platform-tools
 
       - name: Compile changed modules + run scraper tests
         run: |
