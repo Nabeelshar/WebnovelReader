@@ -10,6 +10,7 @@ import my.noveldokusha.feature.local_database.DAOs.ChapterBodyDao
 import my.noveldokusha.feature.local_database.DAOs.ChapterDao
 import my.noveldokusha.feature.local_database.DAOs.ChapterTranslationDao
 import my.noveldokusha.feature.local_database.DAOs.LibraryDao
+import my.noveldokusha.feature.local_database.DAOs.MetadataTranslationDao
 import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
@@ -42,5 +43,9 @@ abstract class LocalDatabaseModule {
         @Provides
         @Singleton
         fun provideChapterTranslationDao(database: AppDatabase): ChapterTranslationDao = database.chapterTranslationDao()
+
+        @Provides
+        @Singleton
+        fun provideMetadataTranslationDao(database: AppDatabase): MetadataTranslationDao = database.metadataTranslationDao()
     }
 }
