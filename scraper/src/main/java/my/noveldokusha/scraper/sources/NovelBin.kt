@@ -122,7 +122,14 @@ class NovelBin(private val networkClient: NetworkClient) : SourceInterface.Catal
                     .let { networkClient.call(it) }
                     .toDocument()
                     .select("ul.list-chapter li a")
-                    .map { ChapterResult(title = it.attr("title") ?: "", url = it.attr("href") ?: "") }
+                    .map {
+                        ChapterResult(
+                            title = it.attr("title").ifBlank { it.text() },
+                            // The AJAX fragment returns relative hrefs.
+                            url = if (it.attr("href").startsWith("http")) it.attr("href")
+                            else java.net.URI(baseUrl).resolve(it.attr("href")).toString()
+                        )
+                    }
             }
         }
 
