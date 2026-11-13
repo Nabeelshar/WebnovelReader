@@ -2,7 +2,7 @@
 
 # NovelDokusha
 Android web novel reader. Reader focused on simplicity, improving reading immersion.
-Search from a large catalog of content, open your pick and just enjoy!
+Search from a large catalog of content, open your pick and just enjoy.
 
 > **Note**: This is an actively maintained fork by [@Nabeelshar](https://github.com/Nabeelshar). The [original repository](https://github.com/nanihadesuka/NovelDokusha) is no longer actively maintained.
 
@@ -20,7 +20,10 @@ Copyright © 2023, [nani](https://github.com/nanihadesuka), Released under [GPL-
       - 顶点小说 (ddxss.cc)
       - 乐阅读 (27k.net)
       - Twkan (twkan.com)
-    - Additional English and international sources
+    - Additional English and international sources, including
+      Royal Road, ScribbleHub, WuxiaWorld, NovelFull, FreeWebNovel,
+      NovelBin, Novelight (novelight.net) and Novel Archive
+      (novelarchive.st, via its public JSON API)
   - **Multiple databases** to search for novels
   - **Local source** to read local EPUBs
   - **Easy backup and restore**
