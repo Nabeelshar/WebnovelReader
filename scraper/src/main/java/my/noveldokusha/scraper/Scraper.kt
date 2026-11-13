@@ -5,7 +5,6 @@ import my.noveldokusha.scraper.databases.BakaUpdates
 import my.noveldokusha.scraper.databases.NovelUpdates
 import my.noveldokusha.scraper.sources.AT
 import my.noveldokusha.scraper.sources.BacaLightnovel
-import my.noveldokusha.scraper.sources.BoxNovel
 import my.noveldokusha.scraper.sources.IndoWebnovel
 import my.noveldokusha.scraper.sources.LocalSource
 import my.noveldokusha.scraper.sources.MeioNovel
@@ -25,8 +24,6 @@ import my.noveldokusha.scraper.sources.ScribbleHub
 import my.noveldokusha.scraper.sources.FreeWebNovel
 import my.noveldokusha.scraper.sources.NovelFull
 import my.noveldokusha.scraper.sources.AllNovel
-import my.noveldokusha.scraper.sources.NovelBinCom
-import my.noveldokusha.scraper.sources.ReadMTL
 import my.noveldokusha.scraper.sources.NewNovel
 import my.noveldokusha.scraper.sources.SonicMTL
 import my.noveldokusha.scraper.sources.NoBadNovel
@@ -41,6 +38,8 @@ import my.noveldokusha.scraper.sources.Twkan
 import my.noveldokusha.scraper.sources.Ttkan
 import my.noveldokusha.scraper.sources.QqBook
 import my.noveldokusha.scraper.sources.WfxsTw
+import my.noveldokusha.scraper.sources.Novelight
+import my.noveldokusha.scraper.sources.NovelArchive
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -63,7 +62,6 @@ class Scraper @Inject constructor(
         AT(),
         Sousetsuka(),
         Saikai(networkClient),
-        BoxNovel(networkClient),
         NovelHall(networkClient),
         WuxiaWorld(networkClient),
         IndoWebnovel(networkClient),
@@ -86,14 +84,14 @@ class Scraper @Inject constructor(
         FreeWebNovel(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
-        NovelBinCom(networkClient),
-        ReadMTL(networkClient),
         NewNovel(networkClient),
         SonicMTL(networkClient),
         NoBadNovel(networkClient),
         FanMTL(networkClient),
         LNMTL(networkClient),
         WtrLab(networkClient),
+        Novelight(networkClient),
+        NovelArchive(networkClient),
     )
 
     val sourcesCatalogsList = sourcesList.filterIsInstance<SourceInterface.Catalog>()
