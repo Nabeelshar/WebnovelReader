@@ -105,9 +105,17 @@ class Novelight(
                 ?.groupValues?.get(1)
             if (chapterId != null) {
                 try {
+                    // NOTE: do NOT build this URL with "$baseUrl/book/..."
+                    // — baseUrl ends with "/", which produced a double
+                    // slash ("//book/ajax/...") and the site answers 404
+                    // for it, so every free chapter came back with an
+                    // empty body. The builder normalises the path.
+                    val chapterUrl = baseUrl.toUrlBuilderSafe()
+                        .addPath("book", "ajax", "read-chapter", chapterId)
+                        .toString()
                     val json = networkClient.call(
                         getRequest(
-                            "$baseUrl/book/ajax/read-chapter/$chapterId",
+                            chapterUrl,
                             headers = xhrHeaders(doc.location())
                         )
                     ).toJson().asJsonObject
