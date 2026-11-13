@@ -10,11 +10,13 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import me.nanihadesuka.algorithms.delimiterAwareTextSplitter
+import java.util.Locale
 
 interface Utterance<T : Utterance<T>> {
     enum class PlayState { PLAYING, FINISHED, LOADING }
@@ -55,8 +57,8 @@ class TextToSpeechManager<T : Utterance<T>>(
         when (it) {
             TextToSpeech.SUCCESS -> {
                 listenToUtterances()
-                availableVoices.addAll(getAvailableVoices())
-                updateActiveVoice()
+                trySetDefaultLanguage()
+                refreshVoices()
                 scope.launch { serviceLoadedFlow.emit(Unit) }
             }
             TextToSpeech.ERROR -> Unit
@@ -81,12 +83,24 @@ class TextToSpeechManager<T : Utterance<T>>(
         _queueList[textSynthesis.utteranceId] = textSynthesis
         _queueListItemSize[textSynthesis.utteranceId] = subItems.size
 
+        var anyQueued = false
         subItems.forEachIndexed { index, textSlice ->
             val uniqueID = "$index|${textSynthesis.utteranceId}"
             val bundle = Bundle().apply {
                 putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, uniqueID)
             }
-            service.speak(textSlice, TextToSpeech.QUEUE_ADD, bundle, uniqueID)
+            val result = service.speak(textSlice, TextToSpeech.QUEUE_ADD, bundle, uniqueID)
+            if (result == TextToSpeech.SUCCESS) anyQueued = true
+        }
+
+        if (!anyQueued) {
+            // The engine refused every chunk (e.g. no voice / language is
+            // configured). No utterance callbacks will ever arrive, so don't
+            // leave the reader stuck in LOADING: mark the item finished so
+            // playback advances and stops cleanly instead of hanging.
+            _queueList.remove(textSynthesis.utteranceId)
+            _queueListItemSize.remove(textSynthesis.utteranceId)
+            setCurrentSpeakState(textSynthesis.copyWithState(Utterance.PlayState.FINISHED))
         }
     }
 
@@ -96,7 +110,7 @@ class TextToSpeechManager<T : Utterance<T>>(
     }
 
     fun trySetVoiceById(id: String): Boolean {
-        val voice = service.voices.find { it.name == id } ?: return false
+        val voice = service.voices.orEmpty().find { it.name == id } ?: return false
         service.voice = voice
         updateActiveVoice()
         return true
@@ -137,8 +151,56 @@ class TextToSpeechManager<T : Utterance<T>>(
         quality = quality
     )
 
+    /**
+     * Give the TTS engine a language context. Many engines return an empty
+     * voice list from [TextToSpeech.getVoices] until a language has been set
+     * at least once, which left the voice picker permanently empty ("No
+     * matches") on affected devices even though voices were installed.
+     */
+    private fun trySetDefaultLanguage() {
+        val default = Locale.getDefault()
+        val result = service.setLanguage(default)
+        if (result == TextToSpeech.LANG_MISSING_DATA ||
+            result == TextToSpeech.LANG_NOT_SUPPORTED
+        ) {
+            service.setLanguage(Locale.ENGLISH)
+        }
+    }
+
+    /**
+     * (Re-)load the voices installed on the device.
+     *
+     * The list used to be read exactly once, in the init callback, where
+     * [TextToSpeech.getVoices] can still return an empty set because the
+     * engine is still loading its voice data. Nothing ever re-queried it,
+     * so the voice picker stayed empty forever. This retries once after a
+     * short delay when the first query comes back empty, and re-emits
+     * [serviceLoadedFlow] when voices appear late so the preferred voice
+     * gets applied then.
+     */
+    fun refreshVoices() {
+        val voices = getAvailableVoices()
+        availableVoices.clear()
+        availableVoices.addAll(voices)
+        updateActiveVoice()
+
+        if (voices.isNotEmpty()) return
+
+        scope.launch {
+            delay(1000)
+            val retry = getAvailableVoices()
+            if (retry.isNotEmpty()) {
+                availableVoices.clear()
+                availableVoices.addAll(retry)
+                updateActiveVoice()
+                serviceLoadedFlow.emit(Unit)
+            }
+        }
+    }
+
     private fun getAvailableVoices(): List<VoiceData> {
-        return service.voices.map { it.toVoiceData() }
+        // getVoices() can return null when the engine is not ready.
+        return service.voices.orEmpty().map { it.toVoiceData() }
     }
 
     private fun listenToUtterances() {

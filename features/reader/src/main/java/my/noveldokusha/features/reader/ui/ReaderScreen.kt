@@ -319,6 +319,7 @@ private fun ViewsPreview(
         scrollToActiveItem = {},
         setVoiceSpeed = {},
         setVoicePitch = {},
+        refreshVoices = {},
         setCustomSavedVoices = {},
         customSavedVoices = rememberMutableStateOf(value = listOf())
     )

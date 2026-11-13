@@ -46,6 +46,7 @@ internal data class TextToSpeechSettingData(
     val setVoiceId: (voiceId: String) -> Unit,
     val setVoiceSpeed: (Float) -> Unit,
     val setVoicePitch: (Float) -> Unit,
+    val refreshVoices: () -> Unit,
 )
 
 internal data class TextSynthesis(
@@ -121,6 +122,7 @@ internal class ReaderTextToSpeech(
         scrollToActiveItem = ::scrollToActiveItem,
         setVoicePitch = ::setVoicePitch,
         setVoiceSpeed = ::setVoiceSpeed,
+        refreshVoices = manager::refreshVoices,
     )
 
     val isActive = derivedStateOf { state.isThereActiveItem.value || state.isPlaying.value }
@@ -128,9 +130,11 @@ internal class ReaderTextToSpeech(
 
     init {
         coroutineScope.launch {
+            // Collect continuously (not take(1)): voices can arrive late
+            // (see TextToSpeechManager.refreshVoices), and the preferred
+            // voice must be (re-)applied when they do.
             manager
                 .serviceLoadedFlow
-                .take(1)
                 .collect {
                     manager.trySetVoiceById(getPreferredVoiceId())
                     manager.trySetVoicePitch(getPreferredVoicePitch())

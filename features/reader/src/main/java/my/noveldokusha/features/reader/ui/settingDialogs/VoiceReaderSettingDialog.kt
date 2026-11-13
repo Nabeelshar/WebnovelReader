@@ -59,12 +59,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -79,12 +77,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.withContext
 import my.noveldoksuha.coreui.components.MyOutlinedTextField
 import my.noveldoksuha.coreui.components.MySlider
 import my.noveldoksuha.coreui.composableActions.debouncedAction
@@ -208,7 +201,8 @@ internal fun VoiceReaderSettingDialog(
                             inputTextFilter = rememberSaveable { mutableStateOf("") },
                             setVoice = state.setVoiceId,
                             isDialogOpen = openVoicesDialog,
-                            setDialogOpen = { openVoicesDialog = it }
+                            setDialogOpen = { openVoicesDialog = it },
+                            refreshVoices = state.refreshVoices
                         )
                     }
                 }
@@ -306,7 +300,7 @@ internal fun VoiceReaderSettingDialog(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, FlowPreview::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun VoiceSelectorDialog(
     availableVoices: List<VoiceData>,
@@ -315,38 +309,42 @@ private fun VoiceSelectorDialog(
     setVoice: (voiceId: String) -> Unit,
     isDialogOpen: Boolean,
     setDialogOpen: (Boolean) -> Unit,
+    refreshVoices: () -> Unit,
 ) {
-    val voicesSorted = remember { mutableStateListOf<VoiceData>() }
-    LaunchedEffect(availableVoices) {
-        withContext(Dispatchers.Default) {
+    // Re-query the engine every time the picker opens: voices can arrive
+    // late (see TextToSpeechManager.refreshVoices), and the list used to
+    // stay empty forever once the first query came back empty.
+    LaunchedEffect(isDialogOpen) {
+        if (isDialogOpen) refreshVoices()
+    }
+
+    // Sorted and filtered lists derived from the live voice list, so they
+    // refresh automatically when voices arrive. (The previous
+    // mutableStateListOf copies were only filled once and never updated
+    // when voices loaded late, which is why the picker kept showing
+    // "No matches".)
+    val voicesSorted by remember {
+        derivedStateOf {
             availableVoices.sortedWith(
                 compareBy<VoiceData> { it.language }
                     .thenByDescending { it.quality }
                     .thenBy { it.needsInternet }
             )
-        }.let { voicesSorted.addAll(it) }
+        }
     }
 
-    val voicesFiltered = remember {
-        mutableStateListOf<VoiceData>().apply { addAll(availableVoices) }
-    }
-
-    LaunchedEffect(Unit) {
-        snapshotFlow { inputTextFilter.value }
-            .debounce(200)
-            .collectLatest {
-                val items = withContext(Dispatchers.Default) {
-                    if (inputTextFilter.value.isEmpty()) {
-                        voicesSorted
-                    } else {
-                        voicesSorted.filter { voice ->
-                            voice.language.contains(it, ignoreCase = true)
-                        }
-                    }
+    val voicesFiltered by remember {
+        derivedStateOf {
+            val query = inputTextFilter.value
+            if (query.isEmpty()) {
+                voicesSorted
+            } else {
+                voicesSorted.filter { voice ->
+                    voice.language.contains(query, ignoreCase = true) ||
+                        voice.id.contains(query, ignoreCase = true)
                 }
-                voicesFiltered.clear()
-                voicesFiltered.addAll(items)
             }
+        }
     }
 
     val listState = rememberLazyListState()
