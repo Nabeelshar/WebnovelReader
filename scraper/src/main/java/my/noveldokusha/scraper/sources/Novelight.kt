@@ -21,6 +21,7 @@ import my.noveldokusha.scraper.domain.ChapterResult
 import okhttp3.Headers
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import java.net.URI
 
 /**
@@ -89,7 +90,13 @@ class Novelight(
     override suspend fun getChapterTitle(doc: Document): String? =
         withContext(Dispatchers.Default) {
             // <title> is "<Book title> - 2 vol. 653 chapter - <Chapter name>"
-            doc.title().substringAfter(" - ", "").ifBlank { null }
+            // (or "<Book> - 8 chapter - <Chapter name>"): strip the
+            // leading "N chapter - " / "V vol. N chapter - " counter,
+            // it is not part of the chapter name.
+            doc.title()
+                .substringAfter(" - ", "")
+                .replaceFirst(Regex("""^(\d+\s+vol\.\s+)?\d+\s+chapter\s+-\s+"""), "")
+                .ifBlank { null }
         }
 
     override suspend fun getChapterText(doc: Document): String =
@@ -157,7 +164,7 @@ class Novelight(
 
             if (bookId == null) {
                 return@tryConnect doc.select("#chapters .chapters a.chapter")
-                    .map { parseChapterLink(it.attr("href"), it.selectFirst(".title")?.text().orEmpty()) }
+                    .map { parseChapterLink(it.attr("href"), extractChapterTitle(it)) }
                     .reversed()
             }
 
@@ -177,13 +184,29 @@ class Novelight(
                     .mapTo(chapters) {
                         parseChapterLink(
                             it.attr("href"),
-                            it.selectFirst(".title")?.text().orEmpty()
+                            extractChapterTitle(it)
                         )
                     }
             }
             // Site lists newest first; the app expects oldest first.
             chapters.reversed()
         }
+    }
+
+    /**
+     * The site renders each chapter link as
+     * `<div class="title">13 vol. 7 chapter - <span>Three Zones</span></div>`
+     * (or `1 chapter - <span>Chapter 1.1 Safe City Binding</span>` when the
+     * book has no volumes). The leading "N chapter - " /
+     * "V vol. N chapter - " is a sequential counter, not part of the chapter
+     * name, so take the name from the inner span when present, otherwise
+     * strip the counter from the full text.
+     */
+    private fun extractChapterTitle(link: Element): String {
+        link.selectFirst(".title span")?.text()?.trim()
+            ?.takeIf { it.isNotBlank() }?.let { return it }
+        return link.selectFirst(".title")?.text()?.trim().orEmpty()
+            .replaceFirst(Regex("""^(\d+\s+vol\.\s+)?\d+\s+chapter\s+-\s+"""), "")
     }
 
     private fun parseChapterLink(href: String, title: String): ChapterResult =
