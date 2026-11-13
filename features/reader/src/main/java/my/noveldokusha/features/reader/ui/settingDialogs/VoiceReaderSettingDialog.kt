@@ -602,7 +602,8 @@ private fun VoiceSelectorDialogContentPreview() {
                 quality = 100
             ),
             setDialogOpen = {},
-            isDialogOpen = true
+            isDialogOpen = true,
+            refreshVoices = {}
         )
     }
 }
