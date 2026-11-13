@@ -2,7 +2,7 @@
 
 # NovelDokusha
 Android web novel reader. Reader focused on simplicity, improving reading immersion.
-Search from a large catalog of content, open your pick and just enjoy.
+Search from a large catalog of content, open your pick and just enjoy!
 
 > **Note**: This is an actively maintained fork by [@Nabeelshar](https://github.com/Nabeelshar). The [original repository](https://github.com/nanihadesuka/NovelDokusha) is no longer actively maintained.
 
