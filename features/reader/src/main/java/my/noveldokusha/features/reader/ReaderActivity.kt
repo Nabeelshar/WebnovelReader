@@ -111,7 +111,7 @@ class ReaderActivity : BaseActivity() {
         }
     }
 
-    private val fontsLoader = FontsLoader()
+    private val fontsLoader by lazy { FontsLoader(assets) }
 
     override fun onBackPressed() {
         viewModel.onCloseManually()
