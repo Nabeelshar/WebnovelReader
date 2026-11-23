@@ -63,6 +63,7 @@
     <string translatable="false" name="source_name_lightnovelstranslations">Light Novels Translations</string>
     <string translatable="false" name="source_name_kolnovel">Kol Novel</string>
     <string translatable="false" name="source_name_sunovels">Su Novels</string>
+    <string translatable="false" name="source_name_novelokur">Novel Okur</string>
     <string translatable="false" name="source_name_novelfull">NovelFull</string>
     <string translatable="false" name="source_name_allnovel">AllNovel</string>
     <string translatable="false" name="source_name_newnovel">NewNovel</string>
