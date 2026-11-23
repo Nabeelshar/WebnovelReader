@@ -47,6 +47,7 @@ import my.noveldokusha.scraper.sources.NovelBuddy
 import my.noveldokusha.scraper.sources.BookNet
 import my.noveldokusha.scraper.sources.BlackBoxTL
 import my.noveldokusha.scraper.sources.InfiniteNovelTranslations
+import my.noveldokusha.scraper.sources.WanderingInn
 import my.noveldokusha.scraper.sources.PhoenixNovels
 import my.noveldokusha.scraper.sources.Tsundoku
 import my.noveldokusha.scraper.sources.Xiaowaz
@@ -144,6 +145,7 @@ class Scraper @Inject constructor(
         BookNet(networkClient),
         BlackBoxTL(networkClient),
         InfiniteNovelTranslations(networkClient),
+        WanderingInn(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
         NewNovel(networkClient),
