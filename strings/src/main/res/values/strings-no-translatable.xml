@@ -29,6 +29,8 @@
     <string translatable="false" name="source_name_scribblehub">ScribbleHub</string>
     <string translatable="false" name="source_name_freewebnovel">FreeWebNovel</string>
     <string translatable="false" name="source_name_libread">LibRead</string>
+    <string translatable="false" name="source_name_novelcool">NovelCool</string>
+    <string translatable="false" name="source_name_gravitytales">Gravity Tales</string>
     <string translatable="false" name="source_name_novelfull">NovelFull</string>
     <string translatable="false" name="source_name_allnovel">AllNovel</string>
     <string translatable="false" name="source_name_newnovel">NewNovel</string>
