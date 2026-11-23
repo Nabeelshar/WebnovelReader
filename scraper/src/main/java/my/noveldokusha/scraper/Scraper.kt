@@ -27,6 +27,7 @@ import my.noveldokusha.scraper.sources.GravityTales
 import my.noveldokusha.scraper.sources.LibRead
 import my.noveldokusha.scraper.sources.NovelCool
 import my.noveldokusha.scraper.sources.Jaomix
+import my.noveldokusha.scraper.sources.Litnet
 import my.noveldokusha.scraper.sources.RanobeLib
 import my.noveldokusha.scraper.sources.NovelFull
 import my.noveldokusha.scraper.sources.AllNovel
@@ -94,6 +95,7 @@ class Scraper @Inject constructor(
         AuthorToday(networkClient),
         RanobeLib(networkClient),
         Jaomix(networkClient),
+        Litnet(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
         NewNovel(networkClient),
