@@ -35,6 +35,7 @@ import my.noveldokusha.scraper.sources.NovelDeGlace
 import my.noveldokusha.scraper.sources.NovelFrance
 import my.noveldokusha.scraper.sources.NovelMania
 import my.noveldokusha.scraper.sources.DarkTranslation
+import my.noveldokusha.scraper.sources.RanobeNovels
 import my.noveldokusha.scraper.sources.PhoenixNovels
 import my.noveldokusha.scraper.sources.Tsundoku
 import my.noveldokusha.scraper.sources.Xiaowaz
@@ -120,6 +121,7 @@ class Scraper @Inject constructor(
         NovelMania(networkClient),
         PhoenixNovels(networkClient),
         DarkTranslation(networkClient),
+        RanobeNovels(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
         NewNovel(networkClient),
