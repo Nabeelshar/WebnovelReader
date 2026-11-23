@@ -39,6 +39,7 @@ import my.noveldokusha.scraper.sources.RanobeNovels
 import my.noveldokusha.scraper.sources.Powanjuan
 import my.noveldokusha.scraper.sources.BedNovel
 import my.noveldokusha.scraper.sources.WoopRead
+import my.noveldokusha.scraper.sources.NovelHi
 import my.noveldokusha.scraper.sources.PhoenixNovels
 import my.noveldokusha.scraper.sources.Tsundoku
 import my.noveldokusha.scraper.sources.Xiaowaz
@@ -128,6 +129,7 @@ class Scraper @Inject constructor(
         Powanjuan(networkClient),
         BedNovel(networkClient),
         WoopRead(networkClient),
+        NovelHi(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
         NewNovel(networkClient),
