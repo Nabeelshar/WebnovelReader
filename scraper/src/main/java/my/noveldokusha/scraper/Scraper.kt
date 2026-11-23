@@ -50,6 +50,7 @@ import my.noveldokusha.scraper.sources.InfiniteNovelTranslations
 import my.noveldokusha.scraper.sources.WanderingInn
 import my.noveldokusha.scraper.sources.LightNovelsTranslations
 import my.noveldokusha.scraper.sources.KolNovel
+import my.noveldokusha.scraper.sources.SuNovels
 import my.noveldokusha.scraper.sources.PhoenixNovels
 import my.noveldokusha.scraper.sources.Tsundoku
 import my.noveldokusha.scraper.sources.Xiaowaz
@@ -150,6 +151,7 @@ class Scraper @Inject constructor(
         WanderingInn(networkClient),
         LightNovelsTranslations(networkClient),
         KolNovel(networkClient),
+        SuNovels(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
         NewNovel(networkClient),
