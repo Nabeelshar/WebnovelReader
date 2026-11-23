@@ -18,5 +18,7 @@ enum class LanguageCode(
     FRENCH(iso639_1 = "fr", nameResId = R.string.language_french),
     INDONESIAN(iso639_1 = "id", nameResId = R.string.language_indonesian),
     CHINESE(iso639_1 = "zh", nameResId = R.string.language_chinese),
-    RUSSIAN(iso639_1 = "ru", nameResId = R.string.language_russian)
+    RUSSIAN(iso639_1 = "ru", nameResId = R.string.language_russian),
+    ARABIC(iso639_1 = "ar", nameResId = R.string.language_arabic),
+    TURKISH(iso639_1 = "tr", nameResId = R.string.language_turkish)
 }

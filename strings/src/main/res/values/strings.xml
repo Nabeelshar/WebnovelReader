@@ -169,6 +169,8 @@
     <string name="language_indonesian">Indonesian</string>
     <string name="language_chinese">Chinese</string>
     <string name="language_russian">Russian</string>
+    <string name="language_arabic">Arabic</string>
+    <string name="language_turkish">Turkish</string>
     <string name="source_name_local">Local</string>
     <string name="source_name_ttkan">Ttkan</string>
     <string name="updating_library">Updating library (%1$d/%2$d)</string>
