@@ -39,6 +39,6 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: WebnovelReader v2.4.5
-          tag_name: v2.4.5
-          files: app/build/outputs/apk/release/WebnovelReader_v2.4.5-release.apk
+          name: WebnovelReader v2.5.0
+          tag_name: v2.5.0
+          files: app/build/outputs/apk/release/WebnovelReader_v2.5.0-release.apk
