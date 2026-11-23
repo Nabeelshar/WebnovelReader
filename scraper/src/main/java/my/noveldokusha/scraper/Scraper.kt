@@ -21,10 +21,12 @@ import my.noveldokusha.scraper.sources.Sousetsuka
 import my.noveldokusha.scraper.sources.WbNovel
 import my.noveldokusha.scraper.sources.WuxiaWorld
 import my.noveldokusha.scraper.sources.ScribbleHub
+import my.noveldokusha.scraper.sources.AuthorToday
 import my.noveldokusha.scraper.sources.FreeWebNovel
 import my.noveldokusha.scraper.sources.GravityTales
 import my.noveldokusha.scraper.sources.LibRead
 import my.noveldokusha.scraper.sources.NovelCool
+import my.noveldokusha.scraper.sources.RanobeLib
 import my.noveldokusha.scraper.sources.NovelFull
 import my.noveldokusha.scraper.sources.AllNovel
 import my.noveldokusha.scraper.sources.NewNovel
@@ -88,6 +90,8 @@ class Scraper @Inject constructor(
         LibRead(networkClient),
         NovelCool(networkClient),
         GravityTales(networkClient),
+        AuthorToday(networkClient),
+        RanobeLib(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
         NewNovel(networkClient),
