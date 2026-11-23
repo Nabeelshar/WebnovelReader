@@ -32,6 +32,7 @@ import my.noveldokusha.scraper.sources.LabNovel
 import my.noveldokusha.scraper.sources.Ranobes
 import my.noveldokusha.scraper.sources.Chireads
 import my.noveldokusha.scraper.sources.NovelDeGlace
+import my.noveldokusha.scraper.sources.NovelFrance
 import my.noveldokusha.scraper.sources.Xiaowaz
 import my.noveldokusha.scraper.sources.WuxiaWorldRu
 import my.noveldokusha.scraper.sources.Litnet
@@ -110,6 +111,7 @@ class Scraper @Inject constructor(
         Chireads(networkClient),
         NovelDeGlace(networkClient),
         Xiaowaz(networkClient),
+        NovelFrance(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
         NewNovel(networkClient),
