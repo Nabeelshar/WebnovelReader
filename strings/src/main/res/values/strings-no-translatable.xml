@@ -58,6 +58,7 @@
     <string translatable="false" name="source_name_novelbuddy">NovelBuddy</string>
     <string translatable="false" name="source_name_booknet">Booknet</string>
     <string translatable="false" name="source_name_blackboxtl">BlackBox TL</string>
+    <string translatable="false" name="source_name_infinitenoveltranslations">Infinite Novel Translations</string>
     <string translatable="false" name="source_name_novelfull">NovelFull</string>
     <string translatable="false" name="source_name_allnovel">AllNovel</string>
     <string translatable="false" name="source_name_newnovel">NewNovel</string>
