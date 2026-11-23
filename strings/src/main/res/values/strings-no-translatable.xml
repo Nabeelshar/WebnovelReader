@@ -36,6 +36,7 @@
     <string translatable="false" name="source_name_jaomix">Jaomix</string>
     <string translatable="false" name="source_name_litnet">Litnet</string>
     <string translatable="false" name="source_name_ifreedom">IFreedom</string>
+    <string translatable="false" name="source_name_labnovel">LabNovel</string>
     <string translatable="false" name="source_name_novelfull">NovelFull</string>
     <string translatable="false" name="source_name_allnovel">AllNovel</string>
     <string translatable="false" name="source_name_newnovel">NewNovel</string>

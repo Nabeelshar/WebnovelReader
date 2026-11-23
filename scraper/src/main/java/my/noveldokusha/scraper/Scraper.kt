@@ -28,6 +28,7 @@ import my.noveldokusha.scraper.sources.LibRead
 import my.noveldokusha.scraper.sources.NovelCool
 import my.noveldokusha.scraper.sources.IFreedom
 import my.noveldokusha.scraper.sources.Jaomix
+import my.noveldokusha.scraper.sources.LabNovel
 import my.noveldokusha.scraper.sources.Litnet
 import my.noveldokusha.scraper.sources.RanobeLib
 import my.noveldokusha.scraper.sources.NovelFull
@@ -98,6 +99,7 @@ class Scraper @Inject constructor(
         Jaomix(networkClient),
         Litnet(networkClient),
         IFreedom(networkClient),
+        LabNovel(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
         NewNovel(networkClient),
