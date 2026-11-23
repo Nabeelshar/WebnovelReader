@@ -52,6 +52,7 @@
     <string translatable="false" name="source_name_bednovel">BedNovel</string>
     <string translatable="false" name="source_name_woopread">WoopRead</string>
     <string translatable="false" name="source_name_novelhi">NovelHi</string>
+    <string translatable="false" name="source_name_kitenovel">KiteNovel</string>
     <string translatable="false" name="source_name_novelfull">NovelFull</string>
     <string translatable="false" name="source_name_allnovel">AllNovel</string>
     <string translatable="false" name="source_name_newnovel">NewNovel</string>
