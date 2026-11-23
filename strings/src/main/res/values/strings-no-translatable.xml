@@ -50,6 +50,7 @@
     <string translatable="false" name="source_name_ranobenovels">Ranobe Novels</string>
     <string translatable="false" name="source_name_powanjuan">Powanjuan</string>
     <string translatable="false" name="source_name_bednovel">BedNovel</string>
+    <string translatable="false" name="source_name_woopread">WoopRead</string>
     <string translatable="false" name="source_name_novelfull">NovelFull</string>
     <string translatable="false" name="source_name_allnovel">AllNovel</string>
     <string translatable="false" name="source_name_newnovel">NewNovel</string>
