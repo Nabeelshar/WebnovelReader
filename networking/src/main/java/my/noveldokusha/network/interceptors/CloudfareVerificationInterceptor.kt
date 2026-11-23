@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import my.noveldokusha.core.domain.BackgroundWorkTracker
 import my.noveldokusha.core.domain.CloudfareVerificationBypassFailedException
 import my.noveldokusha.core.domain.WebViewCookieManagerInitializationFailedException
 import android.content.Intent
@@ -49,6 +50,18 @@ internal class CloudFareVerificationInterceptor(
 
         if (isNotCloudFare(response)) {
             return response
+        }
+
+        // While background work (library updates, batch downloads,
+        // restores) is running, never launch the verification
+        // WebView: it would interrupt the user's reading with a
+        // captcha for a source they are not using. Fail the request
+        // instead — the challenge is shown when the user opens that
+        // source himself.
+        if (BackgroundWorkTracker.isActive) {
+            Log.d(TAG, "Cloudflare wall hit during background work; failing without WebView: ${request.url}")
+            response.close()
+            throw CloudfareVerificationBypassFailedException()
         }
 
         return lock.withLock {

@@ -37,6 +37,11 @@ jobs:
       - name: Compile changed modules + run scraper tests
         run: |
           ./gradlew :scraper:compileDebugKotlin \
+            :core:compileDebugKotlin \
+            :networking:compileDebugKotlin \
+            :features:chaptersList:compileDebugKotlin \
+            :tooling:application_workers:compileDebugKotlin \
+            :tooling:backup_restore:compileDebugKotlin \
             :tooling:local_database:compileDebugKotlin \
             :tooling:text_translator:domain:compileDebugKotlin \
             :app:testDebugUnitTest --tests "my.noveldokusha.ScraperTest"

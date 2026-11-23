@@ -18,6 +18,7 @@ import my.noveldoksuha.data.DownloaderRepository
 import my.noveldoksuha.data.EpubImporterRepository
 import my.noveldokusha.chapterslist.R
 import my.noveldokusha.core.AppCoroutineScope
+import my.noveldokusha.core.domain.BackgroundWorkTracker
 import my.noveldokusha.core.AppFileResolver
 import my.noveldokusha.core.Toasty
 import my.noveldokusha.core.appPreferences.AppPreferences
@@ -264,8 +265,17 @@ internal class ChaptersViewModel @Inject constructor(
         
         // Download chapters sequentially in order
         appScope.launch(Dispatchers.Default) {
-            sortedChapters.forEach { chapter ->
-                appRepository.chapterBody.fetchBody(chapter.chapter.url)
+            // Batch downloads keep running while the user reads other
+            // books: mark them as background work so a Cloudflare wall
+            // hit by a download cannot pop a captcha over the reader
+            // (see BackgroundWorkTracker).
+            BackgroundWorkTracker.enter()
+            try {
+                sortedChapters.forEach { chapter ->
+                    appRepository.chapterBody.fetchBody(chapter.chapter.url)
+                }
+            } finally {
+                BackgroundWorkTracker.exit()
             }
         }
     }
@@ -325,7 +335,12 @@ internal class ChaptersViewModel @Inject constructor(
     fun onChapterDownload(chapter: ChapterWithContext) {
         if (state.isLocalSource.value) return
         appScope.launch {
-            appRepository.chapterBody.fetchBody(chapter.chapter.url)
+            BackgroundWorkTracker.enter()
+            try {
+                appRepository.chapterBody.fetchBody(chapter.chapter.url)
+            } finally {
+                BackgroundWorkTracker.exit()
+            }
         }
     }
 

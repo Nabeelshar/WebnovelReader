@@ -25,6 +25,7 @@ import my.noveldoksuha.data.DownloaderRepository
 import my.noveldoksuha.data.LibraryBooksRepository
 import my.noveldokusha.core.AppCoroutineScope
 import my.noveldokusha.core.AppFileResolver
+import my.noveldokusha.core.domain.BackgroundWorkTracker
 import my.noveldokusha.core.tryAsResponse
 import my.noveldokusha.core.utils.Extra_Uri
 import my.noveldokusha.core.utils.isServiceRunning
@@ -114,6 +115,11 @@ class RestoreDataService : Service() {
             return START_NOT_STICKY
         }
         job = CoroutineScope(Dispatchers.IO).launch {
+            // Background work: Cloudflare walls hit while restoring
+            // must not pop the verification WebView over the user's
+            // reading (see BackgroundWorkTracker).
+            BackgroundWorkTracker.enter()
+            try {
             tryAsResponse {
                 Timber.d("RestoreDataService: Starting restore from URI: ${intentData.uri}")
                 restoreData(intentData.uri)
@@ -131,6 +137,9 @@ class RestoreDataService : Service() {
                     title = getString(R.string.failed_to_restore_cant_access_file)
                     text = "Error: ${it.exception.message?.take(100) ?: "Unknown error"}"
                 }
+            }
+            } finally {
+                BackgroundWorkTracker.exit()
             }
 
             stopSelf(startId)

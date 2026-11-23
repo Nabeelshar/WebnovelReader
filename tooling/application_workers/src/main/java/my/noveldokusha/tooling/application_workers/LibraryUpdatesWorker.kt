@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import my.noveldoksuha.interactor.LibraryUpdatesInteractions
 import my.noveldokusha.core.Response
+import my.noveldokusha.core.domain.BackgroundWorkTracker
 import my.noveldokusha.core.domain.LibraryCategory
 import my.noveldokusha.core.tryAsResponse
 import my.noveldokusha.feature.local_database.tables.Book
@@ -86,6 +87,11 @@ internal class LibraryUpdatesWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result {
+        // Background work: Cloudflare walls hit by these fetches must
+        // not pop the verification WebView over the user's reading
+        // (see BackgroundWorkTracker).
+        BackgroundWorkTracker.enter()
+        try {
         val updateCategory: LibraryCategory =
             inputData.getString(DATA_UPDATE_CATEGORY)?.let(LibraryCategory::valueOf)
                 ?: LibraryCategory.DEFAULT
@@ -95,9 +101,12 @@ internal class LibraryUpdatesWorker @AssistedInject constructor(
         val result = updateLibrary(updateCategory = updateCategory)
             .onError { Timber.e(it.exception) }
 
-        return when (result) {
-            is Response.Error -> Result.failure()
-            is Response.Success -> Result.success()
+            return when (result) {
+                is Response.Error -> Result.failure()
+                is Response.Success -> Result.success()
+            }
+        } finally {
+            BackgroundWorkTracker.exit()
         }
     }
 
