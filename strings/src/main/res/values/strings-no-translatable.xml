@@ -33,6 +33,7 @@
     <string translatable="false" name="source_name_gravitytales">Gravity Tales</string>
     <string translatable="false" name="source_name_authortoday">Author.Today</string>
     <string translatable="false" name="source_name_ranobelib">RanobeLib</string>
+    <string translatable="false" name="source_name_jaomix">Jaomix</string>
     <string translatable="false" name="source_name_novelfull">NovelFull</string>
     <string translatable="false" name="source_name_allnovel">AllNovel</string>
     <string translatable="false" name="source_name_newnovel">NewNovel</string>
