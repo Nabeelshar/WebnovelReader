@@ -43,6 +43,7 @@ import my.noveldokusha.scraper.sources.NovelHi
 import my.noveldokusha.scraper.sources.KiteNovel
 import my.noveldokusha.scraper.sources.ReLibrary
 import my.noveldokusha.scraper.sources.PandaNovel
+import my.noveldokusha.scraper.sources.NovelBuddy
 import my.noveldokusha.scraper.sources.PhoenixNovels
 import my.noveldokusha.scraper.sources.Tsundoku
 import my.noveldokusha.scraper.sources.Xiaowaz
@@ -136,6 +137,7 @@ class Scraper @Inject constructor(
         KiteNovel(networkClient),
         ReLibrary(networkClient),
         PandaNovel(networkClient),
+        NovelBuddy(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
         NewNovel(networkClient),
