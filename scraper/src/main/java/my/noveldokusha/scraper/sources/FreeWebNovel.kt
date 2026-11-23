@@ -278,6 +278,7 @@ class FreeWebNovel(
         val candidates = if (scoped.isNotEmpty()) scoped
         else root.select("a[href]")
         return candidates
+            .toList()
             .filter { it.attr("href").contains("/chapter-") }
             .map {
                 ChapterResult(
