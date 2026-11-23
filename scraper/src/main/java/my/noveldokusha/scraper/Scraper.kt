@@ -22,6 +22,7 @@ import my.noveldokusha.scraper.sources.WbNovel
 import my.noveldokusha.scraper.sources.WuxiaWorld
 import my.noveldokusha.scraper.sources.ScribbleHub
 import my.noveldokusha.scraper.sources.FreeWebNovel
+import my.noveldokusha.scraper.sources.LibRead
 import my.noveldokusha.scraper.sources.NovelFull
 import my.noveldokusha.scraper.sources.AllNovel
 import my.noveldokusha.scraper.sources.NewNovel
@@ -82,6 +83,7 @@ class Scraper @Inject constructor(
         NovelBin(networkClient),
         ScribbleHub(networkClient),
         FreeWebNovel(networkClient),
+        LibRead(networkClient),
         NovelFull(networkClient),
         AllNovel(networkClient),
         NewNovel(networkClient),

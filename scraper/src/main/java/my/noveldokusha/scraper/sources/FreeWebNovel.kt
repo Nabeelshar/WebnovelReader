@@ -86,21 +86,12 @@ class FreeWebNovel(
      * one book's links.
      */
     private fun parseBookList(doc: Document): List<BookResult> {
-        val books = mutableListOf<BookResult>()
-        val seen = mutableSetOf<String>()
-        for (link in doc.select("h3 a[href]")) {
-            val href = link.attr("href")
-            if (!isBookHref(href)) continue
-            val url = resolve(href)
-            if (!seen.add(url)) continue
-            val title = link.text().trim()
-            if (title.isBlank()) continue
-            books += BookResult(
-                title = title,
-                url = url,
-                coverImageUrl = resolve(findItemCover(link))
-            )
-        }
+        // Scope to the main list when present: catalog pages also
+        // carry a sidebar ranking (.ul-list6) whose <h3> book links
+        // would otherwise leak into the results.
+        val mainList = doc.selectFirst(".ul-list1")
+        val scoped = mainList?.let { parseHeadingLinks(it) }.orEmpty()
+        val books = scoped.ifEmpty { parseHeadingLinks(doc) }
         if (books.isNotEmpty()) return books
         // Legacy markup fallback (pre-redesign list).
         return doc.select(".ul-list1 .li-row").mapNotNull { element ->
@@ -113,6 +104,25 @@ class FreeWebNovel(
                 coverImageUrl = resolve(coverUrl)
             )
         }
+    }
+
+    private fun parseHeadingLinks(root: Element): List<BookResult> {
+        val books = mutableListOf<BookResult>()
+        val seen = mutableSetOf<String>()
+        for (link in root.select("h3 a[href]")) {
+            val href = link.attr("href")
+            if (!isBookHref(href)) continue
+            val url = resolve(href)
+            if (!seen.add(url)) continue
+            val title = link.text().trim()
+            if (title.isBlank()) continue
+            books += BookResult(
+                title = title,
+                url = url,
+                coverImageUrl = resolve(findItemCover(link))
+            )
+        }
+        return books
     }
 
     private fun findItemCover(titleLink: Element): String {
