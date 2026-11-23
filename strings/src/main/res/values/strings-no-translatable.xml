@@ -38,6 +38,7 @@
     <string translatable="false" name="source_name_ifreedom">IFreedom</string>
     <string translatable="false" name="source_name_labnovel">LabNovel</string>
     <string translatable="false" name="source_name_ranobes">Ranobes</string>
+    <string translatable="false" name="source_name_wuxiaworld_ru">WuxiaWorld.ru</string>
     <string translatable="false" name="source_name_novelfull">NovelFull</string>
     <string translatable="false" name="source_name_allnovel">AllNovel</string>
     <string translatable="false" name="source_name_newnovel">NewNovel</string>
